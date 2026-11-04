@@ -5,7 +5,7 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "preDeployCommand": ["python manage.py migrate --noinput"],
+    "preDeployCommand": ["python scripts/railway_bootstrap_db.py && python manage.py migrate --noinput"],
     "startCommand": "uvicorn config.asgi:application --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --no-server-header --workers 2",
     "healthcheckPath": "/health/",
     "healthcheckTimeout": 60,

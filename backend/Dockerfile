@@ -33,6 +33,7 @@ COPY --from=builder /opt/venv /opt/venv
 COPY manage.py ./
 COPY config ./config
 COPY medilink ./medilink
+COPY scripts/railway_bootstrap_db.py ./scripts/railway_bootstrap_db.py
 USER 10001:10001
 EXPOSE 8000
 # Set FORWARDED_ALLOW_IPS to the reverse proxy address so X-Forwarded-* headers are trusted.
