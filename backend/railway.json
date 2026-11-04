@@ -5,8 +5,8 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "preDeployCommand": ["python scripts/railway_bootstrap_db.py && python manage.py migrate --noinput"],
-    "startCommand": "uvicorn config.asgi:application --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --no-server-header --workers 2",
+    "preDeployCommand": ["sh -c \"python scripts/railway_bootstrap_db.py && python manage.py migrate --noinput\""],
+    "startCommand": "sh -c \"uvicorn config.asgi:application --host 0.0.0.0 --port $PORT --proxy-headers --no-server-header --workers 2\"",
     "healthcheckPath": "/api/v1/health/",
     "healthcheckTimeout": 60,
     "restartPolicyType": "ON_FAILURE",
