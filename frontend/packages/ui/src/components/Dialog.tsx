@@ -39,12 +39,12 @@ export function Dialog({
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>
-        <RadixDialog.Overlay className="fixed inset-0 z-40 bg-fg/40 data-[state=open]:animate-fade" />
+        <RadixDialog.Overlay className="fixed inset-0 z-40 bg-fg/40 data-[state=open]:animate-fade data-[state=closed]:animate-fade-out" />
         <RadixDialog.Content
           {...(description ? {} : { "aria-describedby": undefined })}
           className={cx(
             "fixed top-1/2 left-1/2 z-50 flex max-h-[90vh] w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col",
-            "rounded-lg bg-surface shadow-lg text-fg data-[state=open]:animate-rise",
+            "rounded-lg bg-surface shadow-lg text-fg data-[state=open]:animate-rise data-[state=closed]:animate-fall",
             size === "lg" ? "max-w-3xl" : "max-w-lg",
             className,
           )}

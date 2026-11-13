@@ -162,7 +162,8 @@
  * weight of `:root`, so the dark block below still wins when the system is dark.
  */
 :root:where([data-surface="site"]:not([data-theme="dark"])) {
-  --ml-bg-page: #f6f8f7;
+  /* the ground sits a clear step below white, so cards read as cards (muted text stays >= 6:1) */
+  --ml-bg-page: #edf2ef;
   --ml-bg-surface: #ffffff;
   --ml-bg-raised: #ffffff;
   --ml-bg-subtle: #eef2f0;

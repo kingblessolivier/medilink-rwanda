@@ -42,10 +42,15 @@
   --color-hairline: var(--site-hairline);
   --color-hairline-strong: var(--site-hairline-strong);
 
-  /* depth: card = hairline only; floating = hairline + one soft shadow (app Shadows.floating) */
-  --shadow-e1: 0 0 0 1px var(--site-hairline);
-  --shadow-e2: 0 0 0 1px var(--site-hairline);
-  --shadow-e3: 0 0 0 1px var(--site-hairline), 0 6px 24px rgb(var(--site-shadow-ink) / 0.09);
+  /* depth: a hairline plus a soft forest-tinted shadow, so white cards lift off the ground;
+     floating = a deeper shadow (app Shadows.floating) */
+  --shadow-e1: 0 0 0 1px var(--site-hairline), 0 1px 2px rgb(var(--site-shadow-ink) / 0.06);
+  --shadow-e2:
+    0 0 0 1px var(--site-hairline), 0 1px 2px rgb(var(--site-shadow-ink) / 0.05),
+    0 4px 14px rgb(var(--site-shadow-ink) / 0.06);
+  --shadow-e3:
+    0 0 0 1px var(--site-hairline), 0 2px 4px rgb(var(--site-shadow-ink) / 0.05),
+    0 12px 32px rgb(var(--site-shadow-ink) / 0.1);
 
   --radius-panel: 0.75rem; /* 12: cards and panels */
   --radius-shell: 1.25rem; /* 20: sheets, bands, the hero art */
@@ -95,7 +100,7 @@
     box-shadow var(--ml-motion-base, 240ms) var(--ml-ease-out, ease-out);
 }
 .ml-card-art {
-  transition: transform 600ms var(--ml-ease-out, ease-out);
+  transition: transform 300ms var(--ml-ease-out, ease-out);
 }
 .ml-card-selected {
   box-shadow: 0 0 0 2px var(--color-primary);
@@ -227,36 +232,6 @@
 /* The hero ground: flat white, no gradient glow (decoration that added nothing, audit 2026-11-07). */
 .site-glow {
   background: var(--color-surface);
-}
-
-/*
- * The forest band of the main pages (as the app's tab headers): deep green, the Imigongo texture
- * faint on the right, and one rounded foot, the same on every page.
- */
-.ml-forest-band {
-  position: relative;
-  isolation: isolate;
-  color: var(--color-on-forest);
-}
-.ml-forest-band::before {
-  content: "";
-  position: absolute;
-  inset: 0 50%;
-  margin-inline: -50vw;
-  z-index: -1;
-  background: var(--color-forest);
-  border-radius: 0 0 var(--radius-shell) var(--radius-shell);
-}
-.ml-forest-band::after {
-  content: "";
-  position: absolute;
-  inset: 0 -50vw 0 50%;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.09;
-  border-bottom-right-radius: var(--radius-shell);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24' viewBox='0 0 48 24'%3E%3Cpath d='M0 12 12 0l12 12 12-12 12 12M0 24l12-12 12 12 12-12 12 12' fill='none' stroke='%23ffffff' stroke-width='1.5'/%3E%3C/svg%3E");
-  mask-image: linear-gradient(90deg, transparent, #000 50%);
 }
 
 /* sections ease in as they scroll into view; without support or with reduced motion they are
