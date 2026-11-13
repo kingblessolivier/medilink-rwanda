@@ -1,21 +1,14 @@
 import type { PublicSlot } from "@medilink/api-client";
 import {
   ArrowRight,
-  Baby,
   Buildings,
   CalendarBlank,
   CalendarCheck,
   CaretRight,
   Crosshair,
-  Eye,
-  FirstAidKit,
-  Flask,
-  HandHeart,
   Stethoscope,
   Sun,
   SunHorizon,
-  Syringe,
-  Tooth,
   Translate,
 } from "@phosphor-icons/react";
 import { Button, buttonClassName, cx, StatusPill } from "@medilink/ui";
@@ -68,20 +61,6 @@ import {
 import { canonicalUrl, siteOrigin } from "./seo";
 
 const WEEKDAY_BASE = Date.UTC(2024, 0, 1); // a Monday
-
-/** A quiet picture word for a service, from its code. */
-function ServiceMark({ code }: { code: string }) {
-  const props = { weight: "duotone", className: "size-5" } as const;
-  if (code.includes("antenatal") || code.includes("maternal")) return <HandHeart {...props} />;
-  if (code.includes("vaccin")) return <Syringe {...props} />;
-  if (code.includes("lab")) return <Flask {...props} />;
-  if (code.includes("dental")) return <Tooth {...props} />;
-  if (code.includes("eye")) return <Eye {...props} />;
-  if (code.includes("paed") || code.includes("pediatric") || code.includes("child"))
-    return <Baby {...props} />;
-  if (code.includes("consult")) return <Stethoscope {...props} />;
-  return <FirstAidKit {...props} />;
-}
 
 function weekday(index: number, language: string, style: "short" | "long" = "short") {
   // dateFormat: Kinyarwanda day names in every browser (#9)
@@ -949,37 +928,56 @@ export function ServicesPage() {
                 <EmptyState title={t("site.services.none")} />
               </Panel>
             ) : (
-              categories.map(({ key, services }) => (
-                <section
-                  key={key}
-                  aria-labelledby={`cat-${key}`}
-                  className="flex scroll-mt-28 flex-col gap-3"
-                >
-                  <h2
-                    id={`cat-${key}`}
-                    className="m-0 font-heading text-[1.5rem] leading-tight font-bold tracking-[-0.02em]"
-                  >
-                    {t(`site.services.categories.${key}`)}
-                  </h2>
-                  {/* the full width: two columns, three on wide screens; the whole card is the link */}
-                  <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 xl:grid-cols-3">
-                    {services.map((s) => (
-                      <li key={s.code}>
-                        <Link
-                          to={`/services/${serviceSlug(s.code)}`}
-                          viewTransition
-                          className="ml-card flex min-h-16 items-center gap-3 rounded-panel bg-surface px-4 py-3 no-underline"
+              // one card per category, packed in two columns (no gaps under short cards): the category's own icon on
+              // the card, its services as quiet rows (no repeated generic icon on every row)
+              <div className="gap-5 md:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
+                {categories.map(({ key, services }) => {
+                  const CategoryIcon =
+                    SERVICE_CATEGORIES.find((c) => c.key === key)?.icon ?? Stethoscope;
+                  return (
+                    <Panel
+                      key={key}
+                      aria-labelledby={`cat-${key}`}
+                      className="scroll-mt-28 overflow-hidden"
+                    >
+                      <div className="flex items-center gap-3 border-b border-hairline px-5 py-4">
+                        <span
+                          aria-hidden="true"
+                          className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-subtle text-on-brand-subtle"
                         >
-                          <span aria-hidden="true" className="flex shrink-0 text-brand">
-                            <ServiceMark code={s.code} />
-                          </span>
-                          <span className="min-w-0 flex-1 font-semibold text-fg">{s.name}</span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ))
+                          <CategoryIcon weight="duotone" className="size-5" />
+                        </span>
+                        <h2
+                          id={`cat-${key}`}
+                          className="m-0 min-w-0 flex-1 font-heading text-h3 leading-tight font-bold"
+                        >
+                          {t(`site.services.categories.${key}`)}
+                        </h2>
+                        <span className="rounded-full bg-subtle px-2 py-0.5 text-caption font-semibold text-fg-secondary tabular-nums">
+                          {services.length}
+                        </span>
+                      </div>
+                      <ul className="m-0 list-none p-0">
+                        {services.map((s) => (
+                          <li key={s.code} className="border-b border-hairline last:border-b-0">
+                            <Link
+                              to={`/services/${serviceSlug(s.code)}`}
+                              viewTransition
+                              className="group flex min-h-13 items-center gap-3 px-5 py-3 text-fg no-underline transition-colors duration-150 ease-out hover:bg-page"
+                            >
+                              <span className="min-w-0 flex-1 font-semibold">{s.name}</span>
+                              <CaretRight
+                                aria-hidden="true"
+                                className="size-4 shrink-0 text-fg-muted transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:text-primary"
+                              />
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </Panel>
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>

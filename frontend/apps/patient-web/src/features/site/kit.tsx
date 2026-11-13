@@ -156,8 +156,9 @@ export function PageHeader({
   return (
     <div
       className={cx(
-        "ml-page-band mb-8 sm:mb-10",
-        "grid gap-x-10 pt-8 pb-9 sm:pt-12 sm:pb-12",
+        "ml-page-band mb-8 sm:mb-10 grid gap-x-10",
+        // a title on its own needs less band than a title with a line and actions
+        lead || actions || art ? "pt-8 pb-9 sm:pt-12 sm:pb-12" : "pt-7 pb-7 sm:pt-9 sm:pb-9",
         Boolean(art) && "lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-end",
       )}
     >
