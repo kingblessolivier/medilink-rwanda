@@ -1,7 +1,7 @@
 import type { PublicFacility, PublicService } from "@medilink/api-client";
 import {
-  ArrowRight,
   CalendarPlus,
+  CaretRight,
   CheckCircle,
   EnvelopeSimple,
   Globe,
@@ -11,6 +11,7 @@ import {
   PersonSimpleWalk,
   Phone,
   SealCheck,
+  ShieldCheck,
   Siren,
 } from "@phosphor-icons/react";
 import {
@@ -309,7 +310,7 @@ export function FacilityPage() {
                           className="ml-press flex min-h-14 flex-col gap-1 px-5 py-3.5 text-fg no-underline transition-colors duration-150 hover:bg-page sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6"
                         >
                           <span className="flex min-w-0 flex-col gap-0.5">
-                            <span className="font-semibold text-link">{d.name}</span>
+                            <span className="font-semibold text-fg">{d.name}</span>
                             <span className="text-body-sm text-fg-secondary">
                               {f.services
                                 .filter((s) => d.service_ids.includes(s.id))
@@ -317,10 +318,11 @@ export function FacilityPage() {
                                 .join(" · ")}
                             </span>
                           </span>
-                          <span className="text-body-sm font-semibold text-fg tabular-nums">
+                          <span className="inline-flex items-center gap-3 text-body-sm text-fg-secondary tabular-nums">
                             {WEEKDAYS.filter((w) => d.days.includes(w))
                               .map((w) => weekdayName(w, lang))
                               .join(" · ")}
+                            <CaretRight aria-hidden="true" className="size-4 text-fg-muted" />
                           </span>
                         </Link>
                       </li>
@@ -334,21 +336,27 @@ export function FacilityPage() {
               <h2 id="insurance" className="m-0 font-heading text-h2">
                 {t("site.facility.insurance")}
               </h2>
-              <InsuranceList codes={insurers} />
-              {f.level_of_care !== "primary" && (
-                <p className="m-0 text-body-sm text-fg-secondary">{t("site.facility.referral")}</p>
-              )}
+              <Panel as="div" className="flex flex-col gap-3 px-5 py-4 sm:px-6">
+                <InsuranceList codes={insurers} />
+                {f.level_of_care !== "primary" && (
+                  <p className="m-0 text-body-sm text-fg-secondary">
+                    {t("site.facility.referral")}
+                  </p>
+                )}
+              </Panel>
             </section>
 
             <section aria-labelledby="about" className="flex flex-col gap-3">
               <h2 id="about" className="m-0 font-heading text-h2">
                 {t("site.facility.about")}
               </h2>
-              <p className="m-0 max-w-[68ch] whitespace-pre-line text-fg">
-                {about || (
-                  <span className="text-fg-secondary">{t("site.facility.noDescription")}</span>
-                )}
-              </p>
+              <Panel as="div" className="px-5 py-4 sm:px-6">
+                <p className="m-0 max-w-[68ch] leading-relaxed whitespace-pre-line text-fg">
+                  {about || (
+                    <span className="text-fg-secondary">{t("site.facility.noDescription")}</span>
+                  )}
+                </p>
+              </Panel>
             </section>
 
             <Photos name={f.name} photos={f.photos} />
@@ -623,7 +631,10 @@ function Photos({ name, photos }: { name: string; photos: string[] }) {
   );
 }
 
-/** A service: how to get it, the live wait or next time, the insurance, the next step as links. */
+/**
+ * A service, in three tiers: the name with how to get it (tags) and the insurers; the live wait and
+ * the next free time on the right; then the next step as real buttons, the main one filled.
+ */
 function ServiceRow({ slug, service }: { slug: string; service: PublicService }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? "rw";
@@ -631,19 +642,58 @@ function ServiceRow({ slug, service }: { slug: string; service: PublicService })
     service.walk_in && t("site.facility.walkIn"),
     service.bookable && t("site.facility.appointment"),
     service.remote_join && t("site.facility.remote"),
-  ].filter(Boolean);
+  ].filter((mode): mode is string => Boolean(mode));
   const insurers = insurerNames(service.insurers, t);
+  const actions = [
+    service.remote_join && {
+      to: `/book/${slug}?service=${service.id}&today=1`,
+      label: t("booking.facility.join"),
+      icon: PersonSimpleWalk,
+    },
+    service.bookable && {
+      to: `/book/${slug}?service=${service.id}`,
+      label: t("booking.facility.book"),
+      icon: CalendarPlus,
+    },
+  ].filter((action): action is { to: string; label: string; icon: typeof CalendarPlus } =>
+    Boolean(action),
+  );
   return (
-    <li className="flex flex-col gap-1.5 border-b border-hairline px-5 py-4 last:border-b-0 sm:px-6">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-        <Link
-          to={`/services/${serviceSlug(service.code)}`}
-          viewTransition
-          className="font-semibold text-link no-underline hover:underline"
-        >
-          {pick(service.name_i18n, lang)}
-        </Link>
-        <span className="flex flex-wrap items-baseline gap-x-3 text-body-sm">
+    <li className="flex flex-col gap-4 border-b border-hairline px-5 py-5 last:border-b-0 sm:px-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+        <div className="flex min-w-0 flex-col gap-2">
+          <Link
+            to={`/services/${serviceSlug(service.code)}`}
+            viewTransition
+            className="group inline-flex items-center gap-1 self-start font-heading text-h3 font-bold text-fg no-underline"
+          >
+            {pick(service.name_i18n, lang)}
+            <CaretRight
+              aria-hidden="true"
+              className="size-4 text-fg-muted transition-transform duration-200 ease-out group-hover:translate-x-0.5"
+            />
+          </Link>
+          {modes.length > 0 && (
+            <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
+              {modes.map((mode) => (
+                <li
+                  key={mode}
+                  className="rounded-full bg-subtle px-2.5 py-0.5 text-caption font-semibold text-fg-secondary"
+                >
+                  {mode}
+                </li>
+              ))}
+            </ul>
+          )}
+          {insurers.length > 0 && (
+            <p className="m-0 inline-flex items-center gap-1.5 text-body-sm text-fg-secondary">
+              <ShieldCheck aria-hidden="true" className="size-4 shrink-0 text-fg-muted" />
+              {t("site.card.accepted")} {insurers.join(", ")}
+            </p>
+          )}
+        </div>
+        {/* the live figures: the wait, and under it the next free time */}
+        <div className="flex shrink-0 flex-col gap-0.5 text-body-sm sm:items-end sm:text-right">
           <WaitingTime result={service} />
           {service.next_slot_at && (
             <span className="text-fg-secondary tabular-nums">
@@ -653,39 +703,27 @@ function ServiceRow({ slug, service }: { slug: string; service: PublicService })
               })}
             </span>
           )}
-        </span>
+        </div>
       </div>
-      <p className="m-0 text-body-sm text-fg-secondary">
-        {[
-          modes.join(" · "),
-          insurers.length > 0 ? `${t("site.card.accepted")} ${insurers.join(", ")}` : "",
-        ]
-          .filter(Boolean)
-          .join(" — ")}
-      </p>
-      {(service.remote_join || service.bookable) && (
-        <p className="m-0 flex flex-wrap gap-x-6 text-body-sm">
-          {service.remote_join && (
+      {actions.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {actions.map((action, index) => (
             <Link
-              to={`/book/${slug}?service=${service.id}&today=1`}
+              key={action.to}
+              to={action.to}
               viewTransition
-              className="inline-flex min-h-target items-center gap-1.5 font-semibold text-link no-underline hover:underline"
+              className={buttonClassName({
+                variant: index === 0 ? "primary" : "secondary",
+                size: "sm",
+                pill: true,
+                className: "ml-press min-h-10 px-4",
+              })}
             >
-              {t("booking.facility.join")}
-              <ArrowRight aria-hidden="true" className="size-4" />
+              <action.icon aria-hidden="true" className="size-4" />
+              {action.label}
             </Link>
-          )}
-          {service.bookable && (
-            <Link
-              to={`/book/${slug}?service=${service.id}`}
-              viewTransition
-              className="inline-flex min-h-target items-center gap-1.5 font-semibold text-link no-underline hover:underline"
-            >
-              {t("booking.facility.book")}
-              <ArrowRight aria-hidden="true" className="size-4" />
-            </Link>
-          )}
-        </p>
+          ))}
+        </div>
       )}
     </li>
   );
