@@ -112,6 +112,8 @@
     "failed": "Impossible de réserver cette visite.",
     "joinTitle": "Besoin de soins aujourd’hui ?",
     "joinBody": "Rejoignez la file du jour d’ici et suivez votre tour. Présentez-vous à l’accueil en arrivant.",
+    "pickedTitle": "L’heure que vous avez choisie",
+    "pickedKeep": "Continuer avec cette heure",
     "takenTitle": "Quelqu’un vient de prendre cette heure",
     "takenBody": "Ces heures proches sont encore libres :",
     "takenNone": "Choisissez une autre heure ci-dessous.",

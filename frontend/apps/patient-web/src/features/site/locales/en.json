@@ -170,6 +170,7 @@
     "full": "Full",
     "away": "—",
     "noTimes": "No free times this day",
+    "bookAt": "Book at {{time}}",
     "book": "Book with this doctor",
     "pickDay": "Choose a day",
     "privacy": "Only free times are shown, never who has booked.",

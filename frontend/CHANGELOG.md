@@ -38,6 +38,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Releases 
   snapping shut; select menus grow from their field; Tailwind's `ease-out` uses the site curve;
   card hovers are 200–300 ms; with reduced motion, page changes still cross-fade (no movement).
 
+### Tappable times, redesigned help, contact, emergency and how it works (2026-11-13)
+
+- Added: each free time on a doctor's page is a link into booking. Booking opens on that day,
+  rings the time and offers "Continue with this time" (one tap holds it); if it was taken
+  meanwhile it says so. Sign-in keeps the choice. Kinyarwanda strings are in `i18n-review.md`.
+- Changed: Help has a sticky side column ("Still need help?" with a contact button, and a
+  one-tap 912 card); topics are cards with their own icons, packed in two columns.
+- Changed: Contact puts the form first, with the help card and the 912 card (and the "not watched
+  around the clock" note) beside it.
+- Changed: Emergency's warning signs sit on a softer card with an icon per sign; what to do is a
+  numbered card that stays in view; hospital names follow the dark-name style.
+- Changed: How it works shows each step number as a badge on its card.
+
 ### Assistant back, all 30 districts, sidebar groups you can hide (2026-11-08)
 
 - Fixed: the AI assistant is back on the public site (the floating button, `/assistant` and the

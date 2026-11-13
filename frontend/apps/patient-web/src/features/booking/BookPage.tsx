@@ -283,6 +283,7 @@ function WhenStep({
   onHeld,
   onJoinToday,
   joining,
+  preferred = null,
 }: {
   facility: PublicFacility;
   service: PublicService;
@@ -292,6 +293,8 @@ function WhenStep({
   onHeld: (slot: PublicSlot, hold: Hold) => void;
   onJoinToday: () => void;
   joining: boolean;
+  /** A time tapped on the doctor's page: its day opens, and one tap keeps it. */
+  preferred?: { date: string; slotId: string } | null;
 }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? "rw";
@@ -316,7 +319,7 @@ function WhenStep({
       }),
   });
   const days = week.data?.days ?? [];
-  const [chosenDay, setChosenDay] = useState<string | null>(null);
+  const [chosenDay, setChosenDay] = useState<string | null>(preferred?.date ?? null);
   const activeDay =
     days.find((d) => d.date === chosenDay) ?? days.find((d) => d.slots.length) ?? days[0];
   const [taken, setTaken] = useState<PublicSlot[] | null>(null);
@@ -339,13 +342,22 @@ function WhenStep({
     : [];
 
   const doctors = [...new Set((activeDay?.slots ?? []).map((s) => s.doctor).filter(Boolean))];
+  // the time tapped on the doctor's page, if it is still free once the week has loaded
+  const wanted = preferred
+    ? days.flatMap((d) => d.slots).find((s) => s.id === preferred.slotId && s.open_places > 0)
+    : undefined;
   const chip = (slot: PublicSlot) => (
     <li key={slot.id}>
       <button
         type="button"
         onClick={() => hold.mutate(slot)}
         disabled={hold.isPending}
-        className="flex min-h-target min-w-24 cursor-pointer flex-col items-center justify-center rounded-md border border-border-input bg-surface px-3 py-1.5 font-semibold tabular-nums text-fg hover:border-brand hover:bg-brand-subtle disabled:cursor-wait disabled:opacity-60"
+        className={cx(
+          "flex min-h-target min-w-24 cursor-pointer flex-col items-center justify-center rounded-md border bg-surface px-3 py-1.5 font-semibold tabular-nums text-fg hover:border-brand hover:bg-brand-subtle disabled:cursor-wait disabled:opacity-60",
+          slot.id === wanted?.id
+            ? "border-primary shadow-[0_0_0_1px_var(--color-primary)]"
+            : "border-border-input",
+        )}
       >
         {time(slot.starts_at, lang)}
         {slot.doctor && doctors.length > 1 && (
@@ -371,6 +383,27 @@ function WhenStep({
           </button>
         </p>
       )}
+      {/* the time chosen on the doctor's page: kept in one tap, or said plainly when it is gone */}
+      {preferred &&
+        !taken &&
+        week.isSuccess &&
+        (wanted ? (
+          <div className="flex flex-col gap-3 rounded-lg bg-brand-subtle px-4 py-3 text-on-brand-subtle sm:flex-row sm:items-center sm:justify-between">
+            <p className="m-0 flex flex-col">
+              <span className="text-body-sm">{t("booking.flow.pickedTitle")}</span>
+              <span className="font-heading text-h3 font-bold tabular-nums">
+                {day(wanted.starts_at, lang)} · {time(wanted.starts_at, lang)}
+              </span>
+            </p>
+            <Button onClick={() => hold.mutate(wanted)} loading={hold.isPending}>
+              {t("booking.flow.pickedKeep")}
+            </Button>
+          </div>
+        ) : (
+          <Alert tone="warning" role="status" title={t("booking.flow.takenTitle")}>
+            {t("booking.flow.takenNone")}
+          </Alert>
+        ))}
       {service.remote_join && (
         <Card className="flex flex-col gap-3 border-2 border-brand sm:flex-row sm:items-center">
           <PersonSimpleWalk
@@ -839,6 +872,11 @@ export function BookPage() {
               }}
               joining={join.isPending}
               onJoinToday={() => join.mutate()}
+              preferred={
+                params.get("slot") && params.get("date")
+                  ? { date: params.get("date")!, slotId: params.get("slot")! }
+                  : null
+              }
               onHeld={(s, h) => {
                 if (hold && hold.hold_id !== h.hold_id)
                   void api.booking.release(hold.hold_id).catch(() => undefined);

@@ -83,6 +83,23 @@ describe("booking flow (S5-F3)", () => {
     );
   });
 
+  it("a time tapped on the doctor's page opens booking on it; one tap keeps it", async () => {
+    const page = renderApp("/doctors/remera-health-center--141b7b2b-193b-4302-8351-4fb1583e0330");
+    const first = (await screen.findAllByRole("link", { name: /^Book at \d\d:\d\d$/ }))[0]!;
+    const href = first.getAttribute("href")!;
+    expect(href).toMatch(/[?&]date=\d{4}-\d\d-\d\d/);
+    expect(href).toMatch(/[?&]slot=/);
+    page.unmount();
+
+    const { user } = await signIn(href);
+    const main = await screen.findByRole("main");
+    await user.click(await within(main).findByRole("button", { name: /Mukamana Jeanne/ }));
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    expect(await screen.findByText("The time you chose")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Continue with this time" }));
+    expect(await screen.findByText(/^We're holding this time for \d+:\d\d$/)).toBeInTheDocument();
+  });
+
   it("back keeps the answers", async () => {
     const { user } = await signIn("/book/kigali-clinic");
     const main = await screen.findByRole("main");

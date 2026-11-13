@@ -1,6 +1,6 @@
 # Kinyarwanda strings: native-speaker review
 
-Keys: 6269.
+Keys: 6272.
 
 Status: **every Kinyarwanda string below is a draft that needs native-speaker review.** None of
 them is final (docs/design/research/10-accessibility-and-localization.md §3, NFR-UX-01). Medical
@@ -4614,6 +4614,8 @@ File: `apps/patient-web/src/features/booking/locales/rw.json`
 | `flow.failed` | Ntitwashoboye gufata iyi gahunda. | We couldn't book this visit. | needs native-speaker review |
 | `flow.joinTitle` | Ukeneye kuvurwa uyu munsi? | Need care today? | needs native-speaker review |
 | `flow.joinBody` | Jya ku murongo w’uyu munsi uri hano ukurikirane igihe cyawe. Wiyandikishe ku bakira abarwayi nugera. | Join today's queue from here and follow your turn. Check in at reception when you arrive. | needs native-speaker review |
+| `flow.pickedTitle` | Igihe wahisemo | The time you chose | needs native-speaker review |
+| `flow.pickedKeep` | Komeza n’iki gihe | Continue with this time | needs native-speaker review |
 | `flow.takenTitle` | Undi muntu amaze gufata iyi saha | Someone just took this time | needs native-speaker review |
 | `flow.takenBody` | Aya masaha ari hafi yayo aracyari ubusa: | These times close to it are still free: | needs native-speaker review |
 | `flow.takenNone` | Hitamo indi saha hepfo. | Choose another time below. | needs native-speaker review |
@@ -6216,6 +6218,7 @@ File: `apps/patient-web/src/features/site/locales/rw.json`
 | `doctor.full` | Byuzuye | Full | needs native-speaker review |
 | `doctor.away` | — | — | needs native-speaker review |
 | `doctor.noTimes` | Nta gihe kiboneka uyu munsi | No free times this day | needs native-speaker review |
+| `doctor.bookAt` | Fata gahunda: {{time}} | Book at {{time}} | needs native-speaker review |
 | `doctor.book` | Fata gahunda kuri uyu muganga | Book with this doctor | needs native-speaker review |
 | `doctor.pickDay` | Hitamo umunsi | Choose a day | needs native-speaker review |
 | `doctor.privacy` | Hagaragazwa gusa ibihe biboneka, ntihagaragazwa abafashe gahunda. | Only free times are shown, never who has booked. | needs native-speaker review |
