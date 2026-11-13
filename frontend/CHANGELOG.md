@@ -25,6 +25,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Releases 
 - Fixed: the AI assistant button is a round icon on the public site, so it no longer covers
   list rows; facility names in the live list no longer cut off on phones; the About page links
   are all the same button; the resume form's email field has room under its paragraph.
+- Changed: the facility page's services read in tiers (name, how to get it as tags, insurers; the
+  wait and next time on the right; real buttons to join or book). Insurance and About sit in
+  cards; doctor rows use dark names and a caret.
+- Changed: the doctor page has a profile card (initials, here today, facts with icons) and an
+  availability calendar: a week strip with the date large and a count per day, the chosen day
+  filled, full days stepped back, and free times grouped into morning and afternoon.
+- Changed: the services index is one card per category (its own icon and count) packed in two
+  columns; the symptom checker uses the shared page header; a page header with only a title is
+  shorter.
 - Changed (motion): dialogs, sheets and the side panel animate out (quicker than in) instead of
   snapping shut; select menus grow from their field; Tailwind's `ease-out` uses the site curve;
   card hovers are 200–300 ms; with reduced motion, page changes still cross-fade (no movement).

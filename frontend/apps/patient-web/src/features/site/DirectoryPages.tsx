@@ -1,27 +1,26 @@
 import type { PublicSlot } from "@medilink/api-client";
 import {
   ArrowRight,
-  Baby,
+  Buildings,
+  CalendarBlank,
   CalendarCheck,
+  CaretRight,
   Crosshair,
-  Eye,
-  FirstAidKit,
-  Flask,
-  HandHeart,
   Stethoscope,
-  Syringe,
-  Tooth,
+  Sun,
+  SunHorizon,
+  Translate,
 } from "@phosphor-icons/react";
 import { Button, buttonClassName, cx, StatusPill } from "@medilink/ui";
-import { dateFormat, kigaliDate } from "@medilink/ui/i18n";
+import { dateFormat, formatDate, kigaliDate } from "@medilink/ui/i18n";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
 
 import { useApi } from "../../app/services";
 import { PublicLayout } from "../../layout/PublicLayout";
-import { DISTRICT_CODES, day, pick, time, type DistrictKey } from "../booking/discovery";
+import { DISTRICT_CODES, day, isMorning, pick, time, type DistrictKey } from "../booking/discovery";
 import {
   FILTER,
   FilterSelect,
@@ -62,20 +61,6 @@ import {
 import { canonicalUrl, siteOrigin } from "./seo";
 
 const WEEKDAY_BASE = Date.UTC(2024, 0, 1); // a Monday
-
-/** A quiet picture word for a service, from its code. */
-function ServiceMark({ code }: { code: string }) {
-  const props = { weight: "duotone", className: "size-5" } as const;
-  if (code.includes("antenatal") || code.includes("maternal")) return <HandHeart {...props} />;
-  if (code.includes("vaccin")) return <Syringe {...props} />;
-  if (code.includes("lab")) return <Flask {...props} />;
-  if (code.includes("dental")) return <Tooth {...props} />;
-  if (code.includes("eye")) return <Eye {...props} />;
-  if (code.includes("paed") || code.includes("pediatric") || code.includes("child"))
-    return <Baby {...props} />;
-  if (code.includes("consult")) return <Stethoscope {...props} />;
-  return <FirstAidKit {...props} />;
-}
 
 function weekday(index: number, language: string, style: "short" | "long" = "short") {
   // dateFormat: Kinyarwanda day names in every browser (#9)
@@ -297,13 +282,7 @@ function DoctorEntry({
   const work = [doctor.specialty, ...doctor.services.map((s) => pick(s.name, lang))]
     .filter(Boolean)
     .join(" · ");
-  // initials as a quiet mark, never a photo (no faces published)
-  const initials = doctor.name
-    .replace(/^(Dr|Midwife)\.?\s+/i, "")
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join("");
+  const initials = initialsOf(doctor.name);
   return (
     // a profile card (upgrade 14 §3): the initials in a ring, who, where, the days; the whole card
     // answers the pointer, the name is the link
@@ -506,6 +485,47 @@ export function DoctorsPage() {
 // ---- /doctors/:slug ----
 
 /** Doctor profile (upgrade 11 §5): who, where, services and a day-by-day picker of free times. */
+/** Initials as a quiet mark, never a photo (no faces published). */
+function initialsOf(name: string): string {
+  return name
+    .replace(/^(Dr|Midwife)\.?\s+/i, "")
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+}
+
+/** One fact on the doctor's profile card: an icon, a small label, the value. */
+function ProfileFact({
+  icon: FactIcon,
+  label,
+  children,
+}: {
+  icon: typeof Buildings;
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex gap-3 py-3.5">
+      <FactIcon
+        aria-hidden="true"
+        weight="duotone"
+        className="mt-0.5 size-5 shrink-0 text-primary"
+      />
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <dt className="text-caption font-semibold tracking-wide text-fg-muted uppercase">
+          {label}
+        </dt>
+        <dd className="m-0 text-fg">{children}</dd>
+      </div>
+    </div>
+  );
+}
+
+/** A link inside the profile card: dark text, a caret, the brand colour only on hover. */
+const FACT_LINK =
+  "group inline-flex items-center gap-1 font-semibold text-fg no-underline transition-colors duration-150 hover:text-primary";
+
 export function DoctorPage() {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? "rw";
@@ -532,6 +552,17 @@ export function DoctorPage() {
     enabled: Boolean(doctor && firstService),
   });
   const [picked, setPicked] = useState<string | null>(null);
+  const strip = useRef<HTMLDivElement>(null);
+  const days = slots.data?.days ?? [];
+  const activeDay =
+    days.find((d) => d.date === picked) ?? days.find((d) => d.slots.length > 0) ?? days[0];
+  // phones: the strip scrolls sideways, so bring the chosen day into view (past full days first)
+  useEffect(() => {
+    const row = strip.current;
+    const chosen = row?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (row && chosen && row.scrollWidth > row.clientWidth)
+      row.scrollTo({ left: chosen.offsetLeft - row.offsetLeft - 8, behavior: "smooth" });
+  }, [activeDay?.date]);
 
   if (parsed === null || profile.isError || (profile.isSuccess && !doctor)) {
     return (
@@ -547,9 +578,6 @@ export function DoctorPage() {
     );
   }
 
-  const days = slots.data?.days ?? [];
-  const activeDay =
-    days.find((d) => d.date === picked) ?? days.find((d) => d.slots.length > 0) ?? days[0];
   const free = (list: PublicSlot[]) => list.filter((s) => s.open_places > 0);
   const lead = doctor
     ? [doctor.specialty, ...doctor.services.map((s) => pick(s.name, lang))]
@@ -585,62 +613,69 @@ export function DoctorPage() {
           </Panel>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
-            <Panel as="aside" className="self-start p-6">
-              <dl className="m-0 flex flex-col divide-y divide-hairline [&>div]:py-3.5 [&>div:first-child]:pt-0 [&>div:last-child]:pb-0">
-                <div>
-                  <dt className="text-body-sm font-semibold text-fg-secondary">
-                    {t("site.doctors.facility")}
-                  </dt>
-                  <dd className="m-0 mt-1">
-                    <Link
-                      to={`/facilities/${doctor.facility.slug}`}
-                      viewTransition
-                      className="font-semibold"
-                    >
-                      {doctor.facility.name}
-                    </Link>
-                    <span className="block text-body-sm text-fg-secondary">
-                      {doctor.facility.district}
-                    </span>
-                  </dd>
+            <Panel as="aside" className="self-start overflow-hidden">
+              {/* who: the initials, the name, what they do */}
+              <div className="flex items-center gap-4 border-b border-hairline bg-[linear-gradient(160deg,var(--color-brand-subtle),var(--color-surface)_70%)] p-6">
+                <span
+                  aria-hidden="true"
+                  className="grid size-16 shrink-0 place-items-center rounded-full bg-surface font-heading text-h3 font-bold text-on-brand-subtle shadow-e1"
+                >
+                  {initialsOf(doctor.name)}
+                </span>
+                <div className="flex min-w-0 flex-col gap-1">
+                  <p className="m-0 font-heading text-h3 leading-tight font-bold text-fg">
+                    {doctor.name}
+                  </p>
+                  {doctor.days.includes(
+                    (new Date(`${kigaliDate()}T00:00:00Z`).getUTCDay() + 6) % 7,
+                  ) && (
+                    <StatusPill tone="open" live>
+                      {t("site.doctors.today")}
+                    </StatusPill>
+                  )}
                 </div>
-                <div>
-                  <dt className="text-body-sm font-semibold text-fg-secondary">
-                    {t("site.doctor.worksIn")}
-                  </dt>
-                  <dd className="m-0 mt-1">
-                    <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
-                      {doctor.services.map((s) => (
-                        <li key={s.code}>
-                          <Link
-                            to={`/services/${serviceSlug(s.code)}`}
-                            viewTransition
-                            className="font-semibold"
-                          >
-                            {pick(s.name, lang)}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-body-sm font-semibold text-fg-secondary">
-                    {t("site.doctor.presentDays")}
-                  </dt>
-                  <dd className="m-0 mt-1 font-semibold">{daysText(doctor.days, lang)}</dd>
-                </div>
+              </div>
+              <dl className="m-0 flex flex-col divide-y divide-hairline px-6 py-2">
+                <ProfileFact icon={Buildings} label={t("site.doctors.facility")}>
+                  <Link
+                    to={`/facilities/${doctor.facility.slug}`}
+                    viewTransition
+                    className={FACT_LINK}
+                  >
+                    {doctor.facility.name}
+                    <CaretRight aria-hidden="true" className="size-3.5 text-fg-muted" />
+                  </Link>
+                  <span className="block text-body-sm text-fg-secondary">
+                    {doctor.facility.district}
+                  </span>
+                </ProfileFact>
+                <ProfileFact icon={Stethoscope} label={t("site.doctor.worksIn")}>
+                  <ul className="m-0 flex list-none flex-col gap-1 p-0">
+                    {doctor.services.map((s) => (
+                      <li key={s.code}>
+                        <Link
+                          to={`/services/${serviceSlug(s.code)}`}
+                          viewTransition
+                          className={FACT_LINK}
+                        >
+                          {pick(s.name, lang)}
+                          <CaretRight aria-hidden="true" className="size-3.5 text-fg-muted" />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </ProfileFact>
+                <ProfileFact icon={CalendarBlank} label={t("site.doctor.presentDays")}>
+                  <span className="font-semibold">{daysText(doctor.days, lang)}</span>
+                </ProfileFact>
                 {doctor.languages.length > 0 && (
-                  <div>
-                    <dt className="text-body-sm font-semibold text-fg-secondary">
-                      {t("site.doctor.languages")}
-                    </dt>
-                    <dd className="m-0 mt-1 font-semibold">
+                  <ProfileFact icon={Translate} label={t("site.doctor.languages")}>
+                    <span className="font-semibold">
                       {doctor.languages
                         .map((code) => t(`site.doctor.spoken.${code}`, { defaultValue: code }))
                         .join(" · ")}
-                    </dd>
-                  </div>
+                    </span>
+                  </ProfileFact>
                 )}
               </dl>
             </Panel>
@@ -662,61 +697,151 @@ export function DoctorPage() {
                   <ErrorState onRetry={() => void slots.refetch()} />
                 ) : (
                   <>
+                    {/*
+                     * the week as a calendar strip: weekday, the date large, the month; a dot and
+                     * the count under it. The chosen day is filled; full days step back.
+                     */}
                     <div
+                      ref={strip}
                       role="group"
                       aria-label={t("site.doctor.pickDay")}
-                      className="grid grid-cols-4 gap-2 sm:grid-cols-7"
+                      className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1 sm:grid sm:grid-cols-7 sm:overflow-visible"
                     >
                       {days.map((d) => {
                         const count = free(d.slots).length;
                         const selected = d.date === activeDay?.date;
+                        const part = (o: Intl.DateTimeFormatOptions) =>
+                          formatDate(`${d.date}T12:00:00Z`, lang, o);
                         return (
                           <button
                             key={d.date}
                             type="button"
                             aria-pressed={selected}
+                            aria-label={`${day(d.date, lang, "long")}: ${
+                              count ? t("site.doctor.free", { count }) : t("site.doctor.full")
+                            }`}
                             onClick={() => setPicked(d.date)}
                             className={cx(
-                              "flex cursor-pointer flex-col items-center gap-1 rounded-2xl border px-2 py-3 transition-[background-color,border-color,transform] duration-200 ease-out-quint active:scale-[0.97]",
+                              "group/day flex min-w-[4.75rem] shrink-0 snap-start cursor-pointer flex-col items-center gap-0.5 rounded-xl px-2 pt-2.5 pb-2 transition-[background-color,box-shadow,color,transform] duration-200 ease-out active:scale-[0.97] sm:min-w-0",
                               selected
-                                ? "border-primary bg-brand-subtle text-on-brand-subtle"
-                                : "border-border bg-surface text-fg hover:border-fg-muted",
+                                ? "bg-primary text-on-primary shadow-e2"
+                                : count
+                                  ? "bg-surface text-fg shadow-[inset_0_0_0_1px_var(--site-hairline)] hover:shadow-[inset_0_0_0_1px_var(--color-primary)]"
+                                  : "bg-page text-fg-muted shadow-[inset_0_0_0_1px_transparent]",
                             )}
                           >
-                            <span className="text-caption font-semibold">
-                              {day(d.date, lang, "short")}
+                            <span
+                              className={cx(
+                                "text-caption font-semibold tracking-wide uppercase",
+                                selected ? "text-on-primary/80" : "text-fg-muted",
+                              )}
+                            >
+                              {part({ weekday: "short" })}
+                            </span>
+                            <span className="font-heading text-h2 leading-none font-bold tabular-nums">
+                              {part({ day: "numeric" })}
                             </span>
                             <span
                               className={cx(
-                                "text-caption tabular-nums",
-                                count ? "font-semibold text-primary" : "text-fg-muted",
+                                "text-caption",
+                                selected ? "text-on-primary/80" : "text-fg-muted",
                               )}
                             >
-                              {count ? t("site.doctor.free", { count }) : t("site.doctor.full")}
+                              {part({ month: "short" })}
+                            </span>
+                            <span
+                              aria-hidden="true"
+                              className={cx(
+                                "mt-1.5 inline-flex items-center gap-1 text-caption font-semibold tabular-nums",
+                                selected
+                                  ? "text-on-primary"
+                                  : count
+                                    ? "text-primary"
+                                    : "text-fg-muted",
+                              )}
+                            >
+                              <span
+                                className={cx(
+                                  "size-1.5 rounded-full",
+                                  selected
+                                    ? "bg-on-primary"
+                                    : count
+                                      ? "bg-primary"
+                                      : "bg-fg-muted/40",
+                                )}
+                              />
+                              {count ? count : t("site.doctor.full")}
                             </span>
                           </button>
                         );
                       })}
                     </div>
                     {activeDay && free(activeDay.slots).length > 0 ? (
-                      <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
-                        {free(activeDay.slots).map((s) => (
-                          <li key={s.id} className="animate-enter">
-                            <span className="inline-flex min-h-10 items-center rounded-full bg-subtle px-4 font-semibold tabular-nums">
-                              {time(s.starts_at, lang)}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
+                      <div key={activeDay.date} className="flex animate-enter flex-col gap-4">
+                        <p className="m-0 text-body-sm text-fg-secondary">
+                          <span className="font-semibold text-fg">
+                            {day(activeDay.date, lang, "long")}
+                          </span>
+                          {" · "}
+                          {t("site.doctor.free", { count: free(activeDay.slots).length })}
+                        </p>
+                        {/* free times by part of day; booking then holds the one you pick */}
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          {(
+                            [
+                              { key: "morning", icon: SunHorizon, morning: true },
+                              { key: "afternoon", icon: Sun, morning: false },
+                            ] as const
+                          ).map((group) => {
+                            const list = free(activeDay.slots).filter(
+                              (slot) => isMorning(slot.starts_at) === group.morning,
+                            );
+                            if (list.length === 0) return null;
+                            return (
+                              <section
+                                key={group.key}
+                                aria-label={t(`booking.flow.${group.key}`)}
+                                className="flex flex-col gap-2.5 rounded-xl bg-page p-3.5"
+                              >
+                                <h3 className="m-0 inline-flex items-center gap-1.5 text-caption font-semibold tracking-wide text-fg-secondary uppercase">
+                                  <group.icon
+                                    aria-hidden="true"
+                                    className="size-4 text-attention"
+                                  />
+                                  {t(`booking.flow.${group.key}`)}
+                                  <span className="font-normal text-fg-muted tabular-nums">
+                                    · {list.length}
+                                  </span>
+                                </h3>
+                                <ul className="m-0 grid list-none grid-cols-3 gap-1.5 p-0 lg:grid-cols-4">
+                                  {list.map((slot) => (
+                                    <li
+                                      key={slot.id}
+                                      className="flex min-h-9 items-center justify-center rounded-lg bg-surface text-body-sm font-semibold text-fg tabular-nums shadow-e1"
+                                    >
+                                      {time(slot.starts_at, lang)}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </section>
+                            );
+                          })}
+                        </div>
+                      </div>
                     ) : (
-                      <p className="m-0 text-fg-secondary">{t("site.doctor.noTimes")}</p>
+                      <p className="m-0 rounded-xl bg-page px-4 py-6 text-center text-fg-secondary">
+                        {t("site.doctor.noTimes")}
+                      </p>
                     )}
                     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline pt-4">
                       <p className="m-0 text-caption text-fg-muted">{t("site.doctor.privacy")}</p>
                       <Link
                         to={`/book/${doctor.facility.slug}?doctor=${doctor.membershipId}&service=${firstService.id}`}
                         viewTransition
-                        className={buttonClassName({ pill: true })}
+                        className={buttonClassName({
+                          pill: true,
+                          className: "ml-press w-full sm:w-auto",
+                        })}
                       >
                         <CalendarCheck aria-hidden="true" className="size-5" />
                         {t("site.doctor.book")}
@@ -803,37 +928,56 @@ export function ServicesPage() {
                 <EmptyState title={t("site.services.none")} />
               </Panel>
             ) : (
-              categories.map(({ key, services }) => (
-                <section
-                  key={key}
-                  aria-labelledby={`cat-${key}`}
-                  className="flex scroll-mt-28 flex-col gap-3"
-                >
-                  <h2
-                    id={`cat-${key}`}
-                    className="m-0 font-heading text-[1.5rem] leading-tight font-bold tracking-[-0.02em]"
-                  >
-                    {t(`site.services.categories.${key}`)}
-                  </h2>
-                  {/* the full width: two columns, three on wide screens; the whole card is the link */}
-                  <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 xl:grid-cols-3">
-                    {services.map((s) => (
-                      <li key={s.code}>
-                        <Link
-                          to={`/services/${serviceSlug(s.code)}`}
-                          viewTransition
-                          className="ml-card flex min-h-16 items-center gap-3 rounded-panel bg-surface px-4 py-3 no-underline"
+              // one card per category, packed in two columns (no gaps under short cards): the category's own icon on
+              // the card, its services as quiet rows (no repeated generic icon on every row)
+              <div className="gap-5 md:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
+                {categories.map(({ key, services }) => {
+                  const CategoryIcon =
+                    SERVICE_CATEGORIES.find((c) => c.key === key)?.icon ?? Stethoscope;
+                  return (
+                    <Panel
+                      key={key}
+                      aria-labelledby={`cat-${key}`}
+                      className="scroll-mt-28 overflow-hidden"
+                    >
+                      <div className="flex items-center gap-3 border-b border-hairline px-5 py-4">
+                        <span
+                          aria-hidden="true"
+                          className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-subtle text-on-brand-subtle"
                         >
-                          <span aria-hidden="true" className="flex shrink-0 text-brand">
-                            <ServiceMark code={s.code} />
-                          </span>
-                          <span className="min-w-0 flex-1 font-semibold text-fg">{s.name}</span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ))
+                          <CategoryIcon weight="duotone" className="size-5" />
+                        </span>
+                        <h2
+                          id={`cat-${key}`}
+                          className="m-0 min-w-0 flex-1 font-heading text-h3 leading-tight font-bold"
+                        >
+                          {t(`site.services.categories.${key}`)}
+                        </h2>
+                        <span className="rounded-full bg-subtle px-2 py-0.5 text-caption font-semibold text-fg-secondary tabular-nums">
+                          {services.length}
+                        </span>
+                      </div>
+                      <ul className="m-0 list-none p-0">
+                        {services.map((s) => (
+                          <li key={s.code} className="border-b border-hairline last:border-b-0">
+                            <Link
+                              to={`/services/${serviceSlug(s.code)}`}
+                              viewTransition
+                              className="group flex min-h-13 items-center gap-3 px-5 py-3 text-fg no-underline transition-colors duration-150 ease-out hover:bg-page"
+                            >
+                              <span className="min-w-0 flex-1 font-semibold">{s.name}</span>
+                              <CaretRight
+                                aria-hidden="true"
+                                className="size-4 shrink-0 text-fg-muted transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:text-primary"
+                              />
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </Panel>
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
