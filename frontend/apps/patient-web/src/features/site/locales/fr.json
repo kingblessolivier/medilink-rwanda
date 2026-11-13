@@ -170,6 +170,7 @@
     "full": "Complet",
     "away": "—",
     "noTimes": "Aucun créneau libre ce jour",
+    "bookAt": "Réserver à {{time}}",
     "book": "Réserver avec ce médecin",
     "pickDay": "Choisissez un jour",
     "privacy": "Seuls les créneaux libres sont affichés, jamais qui a réservé.",

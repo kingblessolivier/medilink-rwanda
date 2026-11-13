@@ -785,7 +785,7 @@ export function DoctorPage() {
                           {" · "}
                           {t("site.doctor.free", { count: free(activeDay.slots).length })}
                         </p>
-                        {/* free times by part of day; booking then holds the one you pick */}
+                        {/* free times by part of day; tap one to book it */}
                         <div className="grid gap-4 sm:grid-cols-2">
                           {(
                             [
@@ -815,11 +815,18 @@ export function DoctorPage() {
                                 </h3>
                                 <ul className="m-0 grid list-none grid-cols-3 gap-1.5 p-0 lg:grid-cols-4">
                                   {list.map((slot) => (
-                                    <li
-                                      key={slot.id}
-                                      className="flex min-h-9 items-center justify-center rounded-lg bg-surface text-body-sm font-semibold text-fg tabular-nums shadow-e1"
-                                    >
-                                      {time(slot.starts_at, lang)}
+                                    <li key={slot.id}>
+                                      {/* a time is a way in: booking opens on it, one tap keeps it */}
+                                      <Link
+                                        to={`/book/${doctor.facility.slug}?doctor=${doctor.membershipId}&service=${firstService.id}&date=${activeDay.date}&slot=${slot.id}`}
+                                        viewTransition
+                                        aria-label={`${t("site.doctor.bookAt", {
+                                          time: time(slot.starts_at, lang),
+                                        })}`}
+                                        className="ml-press flex min-h-10 items-center justify-center rounded-lg bg-surface text-body-sm font-semibold text-fg no-underline tabular-nums shadow-e1 transition-[background-color,color,box-shadow] duration-150 ease-out hover:bg-primary hover:text-on-primary hover:shadow-e2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                                      >
+                                        {time(slot.starts_at, lang)}
+                                      </Link>
                                     </li>
                                   ))}
                                 </ul>

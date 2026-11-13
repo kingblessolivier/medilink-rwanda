@@ -112,6 +112,8 @@
     "failed": "We couldn't book this visit.",
     "joinTitle": "Need care today?",
     "joinBody": "Join today's queue from here and follow your turn. Check in at reception when you arrive.",
+    "pickedTitle": "The time you chose",
+    "pickedKeep": "Continue with this time",
     "takenTitle": "Someone just took this time",
     "takenBody": "These times close to it are still free:",
     "takenNone": "Choose another time below.",
