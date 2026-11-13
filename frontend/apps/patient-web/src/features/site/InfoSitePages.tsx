@@ -1,11 +1,24 @@
 import { ApiError } from "@medilink/api-client";
 import {
   ArrowRight,
+  CalendarCheck,
+  CaretRight,
+  ChatCircleText,
   CheckCircle,
   Crosshair,
+  DeviceMobile,
+  FileText,
+  Lifebuoy,
+  MagnifyingGlass,
+  MapPin,
   NavigationArrow,
   Phone,
+  ShieldCheck,
   Siren,
+  UserCircle,
+  UsersThree,
+  WarningCircle,
+  type Icon,
 } from "@phosphor-icons/react";
 import { Alert, Button, buttonClassName, cx, TextareaField, TextField } from "@medilink/ui";
 import { dateFormat } from "@medilink/ui/i18n";
@@ -111,12 +124,19 @@ export function HowItWorksPage() {
         <div className="flex flex-col gap-10">
           <ol className="m-0 grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-4">
             {JOURNEY.map((key, index) => (
-              <li key={key} className="flex flex-col gap-3 rounded-panel bg-surface p-5 shadow-e1">
+              <li
+                key={key}
+                className="relative flex flex-col gap-3 rounded-panel bg-surface p-5 shadow-e2"
+              >
+                {/* the step number as a badge on the card's corner */}
+                <span
+                  aria-hidden="true"
+                  className="absolute top-4 right-4 grid size-8 place-items-center rounded-full bg-primary font-heading text-body-sm font-bold text-on-primary tabular-nums"
+                >
+                  {index + 1}
+                </span>
                 <StepIllustration step={key} className="h-28 w-auto self-start" />
-                <h2 className="m-0 flex items-baseline gap-2 font-heading text-h3 font-bold">
-                  <span aria-hidden="true" className="text-primary tabular-nums">
-                    {index + 1}
-                  </span>
+                <h2 className="m-0 font-heading text-h3 font-bold">
                   <span className="sr-only">{t("site.home2.stepLabel", { n: index + 1 })}: </span>
                   {t(`site.how.steps.${key}.title`)}
                 </h2>
@@ -280,22 +300,27 @@ export function EmergencyPage() {
             {/* the urgent care card: what to look for */}
             <section
               aria-labelledby="signs"
-              className="overflow-hidden rounded-lg border border-danger-solid bg-surface"
+              className="overflow-hidden rounded-panel bg-surface shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-danger)_30%,transparent),var(--shadow-e2)]"
             >
               <h2
                 id="signs"
-                className="m-0 flex items-center gap-2 bg-danger-solid px-5 py-3.5 text-h3 text-on-danger-solid sm:px-6"
+                className="m-0 flex items-center gap-2.5 border-b border-[color-mix(in_srgb,var(--color-danger)_18%,transparent)] bg-danger-bg px-5 py-4 text-h3 text-danger sm:px-6"
               >
                 <Siren aria-hidden="true" weight="bold" className="size-5 shrink-0" />
                 {t("site.emergency.signsTitle")}
               </h2>
-              <div className="flex flex-col gap-6 px-5 py-5 sm:px-6">
-                <ul className="m-0 grid list-disc gap-x-10 gap-y-2 pl-5 text-fg marker:text-danger sm:grid-cols-2">
-                  {SIGNS.map((sign) => (
-                    <li key={sign}>{t(`public.emergency.signs.${sign}`)}</li>
-                  ))}
-                </ul>
-              </div>
+              <ul className="m-0 grid list-none gap-x-8 gap-y-3 p-5 sm:grid-cols-2 sm:px-6">
+                {SIGNS.map((sign) => (
+                  <li key={sign} className="flex items-start gap-2.5 text-fg">
+                    <WarningCircle
+                      aria-hidden="true"
+                      weight="fill"
+                      className="mt-0.5 size-5 shrink-0 text-danger"
+                    />
+                    {t(`public.emergency.signs.${sign}`)}
+                  </li>
+                ))}
+              </ul>
             </section>
 
             <section aria-labelledby="hospitals" className="flex flex-col gap-3">
@@ -337,9 +362,10 @@ export function EmergencyPage() {
                           <Link
                             to={`/facilities/${h.slug}`}
                             viewTransition
-                            className="font-semibold text-link no-underline hover:underline"
+                            className="group inline-flex items-center gap-1 self-start font-semibold text-fg no-underline hover:text-primary"
                           >
                             {h.name}
+                            <CaretRight aria-hidden="true" className="size-3.5 text-fg-muted" />
                           </Link>
                           <span className="text-body-sm text-fg-secondary">
                             {t(`booking.types.${h.type}`, { defaultValue: h.type })} · {h.district}
@@ -377,22 +403,33 @@ export function EmergencyPage() {
             </section>
           </div>
 
-          <aside aria-labelledby="guidance" className="flex flex-col gap-3">
+          {/* what to do, in order: numbered steps on one card, kept in view on wide screens */}
+          <Panel
+            as="aside"
+            aria-labelledby="guidance"
+            className="flex flex-col gap-4 self-start p-5 lg:sticky lg:top-24"
+          >
             <h2 id="guidance" className="m-0 text-h3">
               {t("site.emergency.guidanceTitle")}
             </h2>
-            <ol className="m-0 flex list-decimal flex-col gap-3 pl-5 text-fg marker:font-semibold">
+            <ol className="m-0 flex list-none flex-col gap-4 p-0">
               {[
                 t("site.emergency.guidance.call", { number: EMERGENCY.number }),
                 t("site.emergency.guidance.nearest"),
                 t("site.emergency.guidance.bring"),
-              ].map((line) => (
-                <li key={line} className="pl-1">
-                  {line}
+              ].map((line, index) => (
+                <li key={line} className="flex items-start gap-3 text-fg">
+                  <span
+                    aria-hidden="true"
+                    className="grid size-7 shrink-0 place-items-center rounded-full bg-danger-bg font-heading text-body-sm font-bold text-danger tabular-nums"
+                  >
+                    {index + 1}
+                  </span>
+                  <span className="pt-0.5 leading-relaxed">{line}</span>
                 </li>
               ))}
             </ol>
-          </aside>
+          </Panel>
         </div>
       </PageContainer>
     </PublicLayout>
@@ -411,6 +448,44 @@ const HELP_CATEGORIES = [
   "documents",
   "technical",
 ] as const;
+
+/** The emergency line as one tap, beside help and contact: red only here, always with words. */
+function EmergencyCallCard({ note }: { note?: string }) {
+  const { t } = useTranslation();
+  const call = (
+    <a
+      href={`tel:${EMERGENCY.number}`}
+      className="ml-press group flex items-center gap-3 rounded-panel bg-danger-bg p-4 no-underline shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-danger)_18%,transparent)]"
+    >
+      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-danger-solid text-on-danger-solid">
+        <Phone aria-hidden="true" weight="fill" className="size-4" />
+      </span>
+      <span className="flex flex-col">
+        <span className="text-body-sm text-fg-secondary">{t("nav.strip.long")}</span>
+        <span className="font-bold text-danger">{t("nav.strip.call")}</span>
+      </span>
+    </a>
+  );
+  if (!note) return call;
+  return (
+    <div className="flex flex-col gap-2">
+      {call}
+      <p className="m-0 px-1 text-caption leading-relaxed text-fg-secondary">{note}</p>
+    </div>
+  );
+}
+
+/** Each help topic's own mark, as the services index has one per category. */
+const HELP_ICONS: Record<(typeof HELP_CATEGORIES)[number], Icon> = {
+  finding: MagnifyingGlass,
+  queue: UsersThree,
+  booking: CalendarCheck,
+  arrival: MapPin,
+  insurance: ShieldCheck,
+  accounts: UserCircle,
+  documents: FileText,
+  technical: DeviceMobile,
+};
 
 /**
  * Help centre (audit 2026-11-07): the search first; the five questions people ask most with their
@@ -467,86 +542,112 @@ export function HelpPage() {
     <PublicLayout>
       <PageContainer className="pb-16">
         <PageHeader crumbs={[{ label: t("footer.help") }]} title={t("site.help.title")} />
-        <div className="flex max-w-[56rem] flex-col gap-10">
-          <SearchBar
-            id="help-search"
-            label={t("site.help.search")}
-            value={text}
-            onChange={setText}
-            placeholder={t("site.help.search")}
-          />
-          {words ? (
-            <section aria-labelledby="help-results" className="flex flex-col gap-4">
-              <h2 id="help-results" className="m-0 font-heading text-title font-bold">
-                {t("site.help.results", { count: matches.length })}
-              </h2>
-              {matches.length ? (
-                answers(matches)
-              ) : (
-                <Panel as="div">
-                  <EmptyState title={t("site.help.none")} />
-                </Panel>
-              )}
-            </section>
-          ) : (
-            <>
-              <section aria-labelledby="help-top" className="flex flex-col gap-4">
-                <h2 id="help-top" className="m-0 font-heading text-title font-bold">
-                  {t("site.help.top")}
+        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="flex min-w-0 flex-col gap-10">
+            <SearchBar
+              id="help-search"
+              label={t("site.help.search")}
+              value={text}
+              onChange={setText}
+              placeholder={t("site.help.search")}
+            />
+            {words ? (
+              <section aria-labelledby="help-results" className="flex flex-col gap-4">
+                <h2 id="help-results" className="m-0 font-heading text-title font-bold">
+                  {t("site.help.results", { count: matches.length })}
                 </h2>
-                {answers(top)}
+                {matches.length ? (
+                  answers(matches)
+                ) : (
+                  <Panel as="div">
+                    <EmptyState title={t("site.help.none")} />
+                  </Panel>
+                )}
               </section>
-              <section aria-labelledby="help-more" className="flex flex-col gap-4">
-                <h2 id="help-more" className="m-0 font-heading text-title font-bold">
-                  {t("site.help.more")}
+            ) : (
+              <>
+                <section aria-labelledby="help-top" className="flex flex-col gap-4">
+                  <h2 id="help-top" className="m-0 font-heading text-title font-bold">
+                    {t("site.help.top")}
+                  </h2>
+                  {answers(top)}
+                </section>
+                <section aria-labelledby="help-more" className="flex flex-col gap-4">
+                  <h2 id="help-more" className="m-0 font-heading text-title font-bold">
+                    {t("site.help.more")}
+                  </h2>
+                  <div className="gap-4 md:columns-2 [&>*]:mb-4 [&>*]:break-inside-avoid">
+                    {rest.map((group) => {
+                      const TopicIcon = HELP_ICONS[group.key];
+                      return (
+                        <Panel
+                          key={group.key}
+                          aria-labelledby={`help-${group.key}`}
+                          className="overflow-hidden"
+                        >
+                          <div className="flex items-center gap-3 border-b border-hairline px-5 py-3.5">
+                            <span
+                              aria-hidden="true"
+                              className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-subtle text-on-brand-subtle"
+                            >
+                              <TopicIcon weight="duotone" className="size-5" />
+                            </span>
+                            <h3 id={`help-${group.key}`} className="m-0 text-h3">
+                              {group.title}
+                            </h3>
+                          </div>
+                          {group.items.map((item) => (
+                            <Faq key={item.q} question={item.q}>
+                              {item.a}
+                            </Faq>
+                          ))}
+                        </Panel>
+                      );
+                    })}
+                  </div>
+                </section>
+              </>
+            )}
+            {articles.isSuccess && articles.data.results.length > 0 && (
+              <Panel aria-labelledby="articles" className="overflow-hidden">
+                <h2 id="articles" className="m-0 border-b border-hairline px-5 py-4 text-h3">
+                  {t("site.help.articles")}
                 </h2>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {rest.map((group) => (
-                    <Panel
-                      key={group.key}
-                      aria-labelledby={`help-${group.key}`}
-                      className="overflow-hidden"
-                    >
-                      <h3
-                        id={`help-${group.key}`}
-                        className="m-0 border-b border-hairline px-5 py-3.5 text-h3"
-                      >
-                        {group.title}
-                      </h3>
-                      {group.items.map((item) => (
-                        <Faq key={item.q} question={item.q}>
-                          {item.a}
-                        </Faq>
-                      ))}
-                    </Panel>
+                <ul className="m-0 list-none p-0">
+                  {articles.data.results.slice(0, 8).map((article) => (
+                    <LinkRow
+                      key={article.id}
+                      to={`/support/articles/${article.slug}`}
+                      title={pick(article.title_i18n, lang)}
+                      detail={pick(article.summary_i18n, lang)}
+                    />
                   ))}
-                </div>
-              </section>
-            </>
-          )}
-          {articles.isSuccess && articles.data.results.length > 0 && (
-            <Panel aria-labelledby="articles" className="overflow-hidden">
-              <h2 id="articles" className="m-0 border-b border-hairline px-5 py-4 text-h3">
-                {t("site.help.articles")}
-              </h2>
-              <ul className="m-0 list-none p-0">
-                {articles.data.results.slice(0, 8).map((article) => (
-                  <LinkRow
-                    key={article.id}
-                    to={`/support/articles/${article.slug}`}
-                    title={pick(article.title_i18n, lang)}
-                    detail={pick(article.summary_i18n, lang)}
-                  />
-                ))}
-              </ul>
+                </ul>
+              </Panel>
+            )}
+          </div>
+
+          {/* beside the questions: a person to ask, and the emergency line, always in reach */}
+          <aside className="flex flex-col gap-4 lg:sticky lg:top-24">
+            <Panel as="div" className="flex flex-col items-start gap-3 p-5">
+              <span
+                aria-hidden="true"
+                className="grid size-10 place-items-center rounded-xl bg-brand-subtle text-on-brand-subtle"
+              >
+                <ChatCircleText weight="duotone" className="size-5" />
+              </span>
+              <h2 className="m-0 text-h3">{t("site.help.contactTitle")}</h2>
+              <Link
+                to="/contact"
+                viewTransition
+                className={buttonClassName({ pill: true, className: "ml-press w-full" })}
+              >
+                {t("site.help.contactAction")}
+                <ArrowRight aria-hidden="true" className="size-4" />
+              </Link>
             </Panel>
-          )}
-          <p className="m-0 text-body text-fg-secondary">
-            {t("site.help.contactTitle")}{" "}
-            <Link to="/contact" viewTransition className="font-semibold text-link">
-              {t("site.help.contactAction")}
-            </Link>
-          </p>
+            <EmergencyCallCard />
+          </aside>
         </div>
       </PageContainer>
     </PublicLayout>
@@ -691,22 +792,7 @@ export function ContactPage() {
     <PublicLayout>
       <PageContainer className="pb-16">
         <PageHeader crumbs={[{ label: t("footer.contact") }]} title={t("site.contact.title")} />
-        <div className="grid gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
-          <Panel as="aside" className="flex flex-col gap-4 self-start p-6">
-            <h2 className="m-0 text-h3">{t("site.contact.infoTitle")}</h2>
-            <p className="m-0 text-fg-secondary">{t("site.contact.infoBody")}</p>
-            <Link to="/help" viewTransition className="font-semibold">
-              {t("footer.help")}
-            </Link>
-            <p className="m-0 flex items-start gap-2 rounded-2xl bg-danger-bg p-4 text-body-sm text-fg">
-              <Siren
-                aria-hidden="true"
-                weight="bold"
-                className="mt-0.5 size-4 shrink-0 text-danger"
-              />
-              {t("site.contact.emergency", { number: EMERGENCY.number })}
-            </p>
-          </Panel>
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
           <Panel as="div" className="p-6 sm:p-8">
             {state === "sent" ? (
               <Alert tone="success" role="status" title={t("site.contact.sent")}>
@@ -764,6 +850,34 @@ export function ContactPage() {
               </form>
             )}
           </Panel>
+          {/* beside the form: where answers may already be, and the emergency line */}
+          <aside className="flex flex-col gap-4 lg:sticky lg:top-24">
+            <Panel as="div" className="flex flex-col items-start gap-3 p-5">
+              <span
+                aria-hidden="true"
+                className="grid size-10 place-items-center rounded-xl bg-brand-subtle text-on-brand-subtle"
+              >
+                <Lifebuoy weight="duotone" className="size-5" />
+              </span>
+              <h2 className="m-0 text-h3">{t("site.contact.infoTitle")}</h2>
+              <p className="m-0 text-body-sm leading-relaxed text-fg-secondary">
+                {t("site.contact.infoBody")}
+              </p>
+              <Link
+                to="/help"
+                viewTransition
+                className={buttonClassName({
+                  variant: "secondary",
+                  pill: true,
+                  className: "ml-press w-full",
+                })}
+              >
+                {t("footer.help")}
+                <ArrowRight aria-hidden="true" className="size-4" />
+              </Link>
+            </Panel>
+            <EmergencyCallCard note={t("site.contact.emergency", { number: EMERGENCY.number })} />
+          </aside>
         </div>
       </PageContainer>
     </PublicLayout>
