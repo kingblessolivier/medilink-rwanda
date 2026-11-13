@@ -34,7 +34,7 @@ export function Sheet({
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>
-        <RadixDialog.Overlay className="fixed inset-0 z-40 bg-[rgb(14_28_23/0.45)] data-[state=open]:animate-fade" />
+        <RadixDialog.Overlay className="fixed inset-0 z-40 bg-[rgb(14_28_23/0.45)] data-[state=open]:animate-fade data-[state=closed]:animate-fade-out" />
         <RadixDialog.Content
           aria-describedby={undefined}
           // opened from outside (no Radix trigger): remember what had focus, give it back on close
@@ -49,8 +49,8 @@ export function Sheet({
           className={cx(
             "fixed z-50 flex flex-col bg-surface text-fg shadow-[var(--shadow-e3,var(--shadow-raised))] outline-none",
             side === "bottom"
-              ? "inset-x-0 bottom-0 max-h-[88dvh] rounded-t-[1.25rem] data-[state=open]:animate-[ml-sheet-up_240ms_var(--ease-out-quint)_both]"
-              : "inset-0 data-[state=open]:animate-fade",
+              ? "inset-x-0 bottom-0 max-h-[88dvh] rounded-t-[1.25rem] data-[state=open]:animate-[ml-sheet-up_240ms_var(--ease-out-quint)_both] data-[state=closed]:animate-[ml-sheet-down_180ms_var(--ease-out-quint)_both]"
+              : "inset-0 data-[state=open]:animate-fade data-[state=closed]:animate-fade-out",
           )}
         >
           {side === "bottom" && (

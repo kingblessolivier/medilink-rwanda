@@ -6,6 +6,8 @@ import { useTranslation } from "react-i18next";
 import { Link, NavLink, useLocation, useNavigation } from "react-router";
 
 export const PUBLIC_NAV = [
+  // `end`: Home is current on "/" only, not on every page under it
+  { to: "/", key: "nav.home", end: true },
   { to: "/find-care", key: "nav.findCare", end: false },
   { to: "/facilities", key: "nav.facilities", end: false },
   { to: "/doctors", key: "nav.doctors", end: false },
@@ -91,7 +93,7 @@ function EmergencyStrip() {
 }
 
 /**
- * Public header: on wide screens a slim emergency line, then a 64 px bar: the logo, the five
+ * Public header: on wide screens a slim emergency line, then a 64 px bar: the logo, Home and the five
  * pages as one segmented group, the language as a code (RW / EN / FR) and Sign in. Below 1200 px
  * the bar keeps the logo, one emergency button and the menu; the menu is a full-height sheet.
  * Emergency shows once per screen size (audit 2026-11-07).
@@ -198,7 +200,7 @@ export function PublicHeader({ showLogin = true }: { showLogin?: boolean }) {
       >
         <nav aria-label={t("nav.label")} className="flex min-h-full flex-col gap-4">
           <ul className="m-0 flex list-none flex-col p-0">
-            {[{ to: "/", key: "nav.home", end: true }, ...PUBLIC_NAV].map((item) => (
+            {PUBLIC_NAV.map((item) => (
               <li key={item.to}>
                 <NavLink
                   to={item.to}

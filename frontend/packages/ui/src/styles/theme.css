@@ -99,4 +99,11 @@
   --animate-rise: ml-rise 240ms var(--ease-out-quint) both;
   --animate-glow: ml-glow 1.5s var(--ease-out-quint);
   --animate-fade: ml-fade 200ms var(--ease-out-quint) both;
+  /* Tailwind's own `ease-out` is too soft to feel responsive: every `ease-out` uses the one curve */
+  --ease-out: var(--ease-out-quint);
+  /* leaving is quicker than arriving: the system answers fast, the eye follows what comes in */
+  --animate-fade-out: ml-fade-out 150ms var(--ease-out-quint) both;
+  --animate-fall: ml-fall 150ms var(--ease-out-quint) both;
+  /* menus and lists grow out of the field that opened them */
+  --animate-pop: ml-pop 180ms var(--ease-out-quint) both;
 }

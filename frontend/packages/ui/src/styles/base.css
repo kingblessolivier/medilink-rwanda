@@ -130,6 +130,34 @@
     opacity: 0;
   }
 }
+@keyframes ml-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes ml-fall {
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+@keyframes ml-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+}
+@keyframes ml-sheet-down {
+  to {
+    transform: translateY(100%);
+  }
+}
+@keyframes ml-panel-out {
+  to {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
 @keyframes ml-glow {
   from {
     background-color: color-mix(in srgb, var(--color-attention-solid) 18%, transparent);
@@ -228,11 +256,16 @@ html:has(.ml-soft) {
     transform: translateY(6px);
   }
 }
+/* Reduced motion: no movement, but the pages still cross-fade so a change never jolts. */
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
+  ::view-transition-group(*) {
     animation: none !important;
+  }
+  ::view-transition-old(*) {
+    animation: ml-vt-out 150ms ease both !important;
+  }
+  ::view-transition-new(*) {
+    animation: ml-fade 150ms ease both !important;
   }
 }
 

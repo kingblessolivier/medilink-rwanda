@@ -9,6 +9,26 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Releases 
 
 <!-- Wave 1: each sprint writes ONLY under its own heading; consolidated into Added/Changed/Fixed at release. -->
 
+### Cleaner public site: one header, one spine, calmer motion (2026-11-13)
+
+- Changed: every public page uses the same light page header (breadcrumb, title, one line); the
+  dark green band with a rounded foot is gone. Header actions are the standard primary and
+  secondary buttons (`HEADER_PRIMARY` / `HEADER_SECONDARY` replace `ON_FOREST_*` in the site kit).
+- Changed: reading pages (About, Help, legal) start at the same left edge as every other page;
+  only their text column is narrower.
+- Changed: the home page leads with the search; under it one strip of three live figures instead
+  of five competing tiles. The symptom checker is one link under the search; the duplicate
+  "open near you" panel is gone (the facilities list below shows the same).
+- Added: Home in the desktop navigation bar (it was only in the phone menu).
+- Fixed: in light mode cards blended into the page. The site ground is a step below white
+  (#edf2ef) and cards carry a soft forest-tinted shadow under the hairline.
+- Fixed: the AI assistant button is a round icon on the public site, so it no longer covers
+  list rows; facility names in the live list no longer cut off on phones; the About page links
+  are all the same button; the resume form's email field has room under its paragraph.
+- Changed (motion): dialogs, sheets and the side panel animate out (quicker than in) instead of
+  snapping shut; select menus grow from their field; Tailwind's `ease-out` uses the site curve;
+  card hovers are 200–300 ms; with reduced motion, page changes still cross-fade (no movement).
+
 ### Assistant back, all 30 districts, sidebar groups you can hide (2026-11-08)
 
 - Fixed: the AI assistant is back on the public site (the floating button, `/assistant` and the

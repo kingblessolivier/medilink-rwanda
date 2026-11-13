@@ -15,8 +15,8 @@ import { PublicLayout } from "../../layout/PublicLayout";
 import { FacilityBoardIllustration } from "../site/illustrations";
 import {
   Faq,
-  ON_FOREST_PRIMARY,
-  ON_FOREST_SECONDARY,
+  HEADER_PRIMARY,
+  HEADER_SECONDARY,
   PageContainer,
   PageHeader,
   Panel,
@@ -48,7 +48,6 @@ export function ForFacilitiesPage() {
           {/* the one public page template: breadcrumb → H1 → lead, the two first steps and the
               facility board drawing on the band (upgrade 14 §3) */}
           <PageHeader
-            tone="forest"
             crumbs={[{ label: t("facilityApplication.public.title") }]}
             title={t("facilityApplication.public.title")}
             lead={t("facilityApplication.public.problem")}
@@ -60,10 +59,10 @@ export function ForFacilitiesPage() {
             }
             actions={
               <>
-                <Link to="/for-facilities/apply" className={ON_FOREST_PRIMARY}>
+                <Link to="/for-facilities/apply" className={HEADER_PRIMARY}>
                   {t("facilityApplication.public.register")}
                 </Link>
-                <a href="#continue" className={ON_FOREST_SECONDARY}>
+                <a href="#continue" className={HEADER_SECONDARY}>
                   {t("facilityApplication.public.continue")}
                 </a>
               </>
@@ -183,7 +182,7 @@ function ResumeLinkForm({ headingId }: { headingId: string }) {
       <h2 id={headingId} className="m-0 font-heading text-h3 font-bold">
         {t("facilityApplication.resume.linkTitle")}
       </h2>
-      <p className="mt-2 text-fg-secondary">{t("facilityApplication.resume.linkBody")}</p>
+      <p className="mt-2 mb-5 text-fg-secondary">{t("facilityApplication.resume.linkBody")}</p>
       {sent ? (
         <Alert tone="success" role="status">
           {t("facilityApplication.resume.linkSent")}

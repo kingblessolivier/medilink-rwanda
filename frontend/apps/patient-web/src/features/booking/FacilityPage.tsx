@@ -38,8 +38,8 @@ import {
   FacilityStatus,
   InsuranceList,
   NotFoundState,
-  ON_FOREST_PRIMARY,
-  ON_FOREST_SECONDARY,
+  HEADER_PRIMARY,
+  HEADER_SECONDARY,
   PageContainer,
   PageHeader,
   Panel,
@@ -143,7 +143,6 @@ export function FacilityPage() {
     <PublicLayout>
       <PageContainer className="pb-16">
         <PageHeader
-          tone="forest"
           crumbs={[{ to: "/facilities", label: t("nav.facilities") }, { label: f.name }]}
           title={f.name}
           description={summary}
@@ -171,7 +170,7 @@ export function FacilityPage() {
                 <StatusPill tone="emergency">{t("site.emergency.department")}</StatusPill>
               )}
               {f.verified && (
-                <span className="inline-flex items-center gap-1 font-semibold text-on-forest">
+                <span className="inline-flex items-center gap-1 font-semibold text-brand">
                   <SealCheck aria-hidden="true" weight="fill" className="size-4" />
                   {t("site.facility.verified")}
                 </span>
@@ -181,12 +180,7 @@ export function FacilityPage() {
           actions={
             <>
               {directions && (
-                <a
-                  href={directions}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={ON_FOREST_SECONDARY}
-                >
+                <a href={directions} target="_blank" rel="noreferrer" className={HEADER_SECONDARY}>
                   <NavigationArrow aria-hidden="true" className="size-4" />
                   {t("site.facility.directions")}
                   <span className="sr-only"> {t("common.opensInNewTab")}</span>
@@ -195,7 +189,7 @@ export function FacilityPage() {
               {/* phones have it in the sticky bar at the bottom instead */}
               {action && (
                 <span className="hidden md:contents">
-                  <Link to={action.to} viewTransition className={ON_FOREST_PRIMARY}>
+                  <Link to={action.to} viewTransition className={HEADER_PRIMARY}>
                     {action.kind === "join" ? (
                       <PersonSimpleWalk aria-hidden="true" className="size-4" />
                     ) : (

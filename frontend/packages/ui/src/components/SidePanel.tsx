@@ -29,12 +29,12 @@ export function SidePanel({
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>
-        <RadixDialog.Overlay className="fixed inset-0 z-40 bg-fg/25 data-[state=open]:animate-fade" />
+        <RadixDialog.Overlay className="fixed inset-0 z-40 bg-fg/25 data-[state=open]:animate-fade data-[state=closed]:animate-fade-out" />
         <RadixDialog.Content
           aria-describedby={undefined}
           className={cx(
             "fixed inset-y-2 right-2 z-50 flex w-[calc(100%-1rem)] flex-col overflow-hidden rounded-3xl bg-surface text-fg shadow-raised",
-            "data-[state=open]:animate-[ml-panel-in_280ms_var(--ease-out-quint)_both] motion-reduce:animate-none",
+            "data-[state=open]:animate-[ml-panel-in_280ms_var(--ease-out-quint)_both] data-[state=closed]:animate-[ml-panel-out_180ms_var(--ease-out-quint)_both] motion-reduce:animate-none",
             "sm:max-w-xl",
           )}
         >

@@ -23,13 +23,18 @@ import { EmptyIllustration } from "./illustrations";
  * so widths, headings, states and facility facts look the same everywhere.
  */
 
-/** Buttons on the forest band: white for the main action, a white outline for the other. */
-export const ON_FOREST_PRIMARY =
-  "ml-press inline-flex min-h-11 items-center gap-2 rounded-full bg-on-forest px-5 font-semibold text-forest no-underline transition-[filter] duration-150 hover:brightness-95";
-export const ON_FOREST_SECONDARY =
-  "ml-press inline-flex min-h-11 items-center gap-2 rounded-full px-5 font-semibold text-on-forest no-underline shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-on-forest)_45%,transparent)] transition-colors duration-150 hover:bg-forest-raised";
+/** The page header's actions: one filled main action, an outlined second one. */
+export const HEADER_PRIMARY = buttonClassName({ pill: true, className: "ml-press min-h-11 px-5" });
+export const HEADER_SECONDARY = buttonClassName({
+  variant: "secondary",
+  pill: true,
+  className: "ml-press min-h-11 px-5",
+});
 
-/** Page width and side gutters; `narrow` for reading pages (help, legal, about). */
+/**
+ * Page width and side gutters. `narrow` for reading pages (help, legal, about): the text column is
+ * narrower, but it starts at the same left edge as every other page, so the site has one spine.
+ */
 export function PageContainer({
   children,
   narrow = false,
@@ -41,16 +46,12 @@ export function PageContainer({
 }) {
   // The dashboard shell already sets the width and gutters
   const inDashboard = useInDashboard();
+  // one template for every public page: 1408 px wide, 24 px gutters (16 px on phones)
+  const outer = inDashboard ? "w-full" : "mx-auto w-full max-w-[88rem] px-4 sm:px-6";
+  if (!narrow) return <div className={cx(outer, className)}>{children}</div>;
   return (
-    <div
-      className={cx(
-        // one template for every public page: 1408 px wide, 24 px gutters (16 px on phones)
-        inDashboard ? "w-full" : "mx-auto w-full px-4 sm:px-6",
-        narrow ? "max-w-[48rem]" : "max-w-[88rem]",
-        className,
-      )}
-    >
-      {children}
+    <div className={outer}>
+      <div className={cx("w-full max-w-[48rem]", className)}>{children}</div>
     </div>
   );
 }
@@ -103,8 +104,8 @@ export function Breadcrumbs({ items, onForest = false }: { items: Crumb[]; onFor
 
 /**
  * Breadcrumb, the page <h1> (document title, focus after navigation), at most one short line, and
- * one optional action. `forest` on the main pages (the app's deep-green band, Imigongo texture,
- * one rounded foot); `light` on reading pages (help, legal, about), at the same left edge.
+ * one optional action. Every public page uses the same light band, so moving between pages never
+ * feels like changing sites.
  */
 export function PageHeader({
   title,
@@ -113,7 +114,6 @@ export function PageHeader({
   actions,
   art,
   titleTransition,
-  tone = "light",
   description,
   jsonLd,
 }: {
@@ -129,9 +129,7 @@ export function PageHeader({
   art?: ReactNode;
   /** View-transition name of the title, so a card's name flows into it. */
   titleTransition?: string;
-  tone?: "forest" | "light";
 }) {
-  const forest = tone === "forest";
   const { t } = useTranslation();
   // Inside the dashboard the shell shows the breadcrumb and the top spacing
   const inDashboard = useInDashboard();
@@ -158,37 +156,27 @@ export function PageHeader({
   return (
     <div
       className={cx(
-        forest ? "ml-forest-band mb-8 sm:mb-10" : "ml-page-band mb-8 sm:mb-10",
+        "ml-page-band mb-8 sm:mb-10",
         "grid gap-x-10 pt-8 pb-9 sm:pt-12 sm:pb-12",
         Boolean(art) && "lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-end",
       )}
     >
       <div className="flex min-w-0 flex-col gap-4">
-        {crumbs && (
-          <Breadcrumbs onForest={forest} items={[{ to: "/", label: t("nav.home") }, ...crumbs]} />
-        )}
+        {crumbs && <Breadcrumbs items={[{ to: "/", label: t("nav.home") }, ...crumbs]} />}
         <div className="flex animate-enter flex-wrap items-end justify-between gap-6">
           <div className="flex max-w-[48rem] flex-col gap-3">
             <PageHeading
               title={title}
               description={description}
               jsonLd={jsonLd}
-              className={cx(
-                "font-heading text-page-title font-bold text-balance",
-                forest ? "text-on-forest" : "text-fg",
-              )}
+              className="font-heading text-page-title font-bold text-balance text-fg"
             >
               <span style={titleTransition ? { viewTransitionName: titleTransition } : undefined}>
                 {title}
               </span>
             </PageHeading>
             {lead && (
-              <p
-                className={cx(
-                  "ml-measure m-0 text-body leading-relaxed text-pretty",
-                  forest ? "text-on-forest-muted" : "text-fg-secondary",
-                )}
-              >
+              <p className="ml-measure m-0 text-body leading-relaxed text-pretty text-fg-secondary">
                 {lead}
               </p>
             )}

@@ -295,11 +295,7 @@ export function CarePage() {
     return (
       <PublicLayout>
         <PageContainer className="pb-16">
-          <PageHeader
-            tone="forest"
-            crumbs={[{ label: t("nav.findCare") }]}
-            title={t("site.care.title")}
-          />
+          <PageHeader crumbs={[{ label: t("nav.findCare") }]} title={t("site.care.title")} />
           <div className="flex flex-col gap-6">
             <FilterBar
               search={searchBox("w-full")}
@@ -422,11 +418,7 @@ export function CarePage() {
   return (
     <PublicLayout>
       <PageContainer>
-        <PageHeader
-          tone="forest"
-          crumbs={[{ label: t("nav.findCare") }]}
-          title={t("site.care.title")}
-        />
+        <PageHeader crumbs={[{ label: t("nav.findCare") }]} title={t("site.care.title")} />
         {/* Dashboard: one search card (search, near me, filters, then the one-tap filters),
             since the sidebar leaves no room for a filter column (upgrade 12 §7) */}
         <div className="flex flex-col gap-3 rounded-panel bg-surface shadow-e2 p-3 sm:p-4">

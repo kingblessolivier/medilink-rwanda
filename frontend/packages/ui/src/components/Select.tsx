@@ -184,7 +184,7 @@ export function Select<T extends string>({
           onKeyDown={onListKey}
           className={cx(
             "absolute top-full right-0 left-0 z-50 m-0 mt-1.5 max-h-72 min-w-[12rem] overflow-y-auto rounded-xl bg-raised p-1.5 outline-none",
-            "shadow-[var(--shadow-e3,var(--shadow-raised))] animate-fade",
+            "origin-top shadow-[var(--shadow-e3,var(--shadow-raised))] animate-pop",
           )}
         >
           {options.map((option, index) => {

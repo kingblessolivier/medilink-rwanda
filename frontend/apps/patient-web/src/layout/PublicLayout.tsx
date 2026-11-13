@@ -72,7 +72,7 @@ export function PublicLayout({
       {/* the AI assistant's floating button (env.publicAssistant) */}
       {env.publicAssistant && (
         <Suspense fallback={null}>
-          <AssistantLauncher />
+          <AssistantLauncher compact />
         </Suspense>
       )}
     </div>

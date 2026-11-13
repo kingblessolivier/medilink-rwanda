@@ -107,11 +107,7 @@ export function HowItWorksPage() {
   return (
     <PublicLayout>
       <PageContainer className="pb-16">
-        <PageHeader
-          tone="forest"
-          crumbs={[{ label: t("nav.howItWorks") }]}
-          title={t("site.how.title")}
-        />
+        <PageHeader crumbs={[{ label: t("nav.howItWorks") }]} title={t("site.how.title")} />
         <div className="flex flex-col gap-10">
           <ol className="m-0 grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-4">
             {JOURNEY.map((key, index) => (
@@ -603,14 +599,14 @@ export function AboutPage() {
             <Link
               to="/for-facilities"
               viewTransition
-              className={buttonClassName({ variant: "ghost", pill: true })}
+              className={buttonClassName({ variant: "secondary", pill: true })}
             >
               {t("public.about.forFacilities")}
             </Link>
             <Link
               to="/privacy"
               viewTransition
-              className={buttonClassName({ variant: "ghost", pill: true })}
+              className={buttonClassName({ variant: "secondary", pill: true })}
             >
               {t("public.about.privacy")}
             </Link>

@@ -16,7 +16,7 @@ import {
   UsersThree,
   type Icon,
 } from "@phosphor-icons/react";
-import { Button, cx, ImigongoPattern, Skeleton } from "@medilink/ui";
+import { Button, cx, ImigongoPattern } from "@medilink/ui";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -31,10 +31,9 @@ import {
   type DistrictKey,
   type ServiceKey,
 } from "../features/booking/discovery";
-import { FILTER, sortResults, useNearMe, waitText, type Sort } from "../features/booking/Places";
-import { FacilityBuilding } from "../features/site/buildings";
+import { FILTER, sortResults, useNearMe, type Sort } from "../features/booking/Places";
 import { kigaliNow, nextOpening, useAllFacilities, useProfiles } from "../features/site/data";
-import { FacilityExplorer, WaitMeter } from "../features/site/FacilityDirectory";
+import { FacilityExplorer } from "../features/site/FacilityDirectory";
 import { HillsideCareIllustration } from "../features/site/illustrations";
 import { LocationSelector, PageContainer, SearchBar } from "../features/site/kit";
 import { PublicLayout } from "../layout/PublicLayout";
@@ -56,7 +55,6 @@ const CARE: { key: ServiceKey; icon: Icon }[] = [
 ];
 
 /** How many open places the live panel shows. */
-const LIVE_ROWS = 4;
 
 /** Section heading with its lead and one link: the same rhythm on every section. */
 function SectionHead({
@@ -154,7 +152,7 @@ function ClosedNotice({ rows, className }: { rows: FacilityResult[]; className?:
   );
 }
 
-/** A live figure in the bento: icon and label, one large number, and what it counts. */
+/** One live figure in the strip under the hero: a label, one number, and what it counts. */
 function Figure({
   icon: FigureIcon,
   label,
@@ -167,88 +165,18 @@ function Figure({
   hint?: string | undefined;
 }) {
   return (
-    <div className="flex min-h-40 flex-col justify-between gap-6 rounded-panel bg-surface p-6 shadow-e2">
-      <span className="inline-flex items-center gap-2 text-body-sm font-semibold text-fg-secondary">
+    <div className="flex flex-col gap-2 px-6 py-5">
+      <dt className="inline-flex items-center gap-2 text-body-sm font-semibold text-fg-secondary">
         <FigureIcon aria-hidden="true" weight="duotone" className="size-5 text-primary" />
         {label}
-      </span>
-      <span className="flex flex-col gap-1">
-        <span className="font-heading text-kpi font-bold text-fg tabular-nums">{value}</span>
-        {hint && <span className="text-body-sm text-fg-secondary">{hint}</span>}
-      </span>
-    </div>
-  );
-}
-
-/** Places open now with their live wait, in the bento beside the figures. */
-function LivePanel({
-  rows,
-  loading,
-  className,
-}: {
-  rows: FacilityResult[];
-  loading: boolean;
-  className?: string;
-}) {
-  const { t, i18n } = useTranslation();
-  const lang = i18n.resolvedLanguage ?? "rw";
-  return (
-    <section
-      aria-labelledby="live-title"
-      className={cx("flex flex-col overflow-hidden rounded-panel bg-surface shadow-e2", className)}
-    >
-      <div className="flex items-center justify-between gap-3 px-6 pt-5 pb-3">
-        <h2 id="live-title" className="m-0 font-heading text-h3 font-bold">
-          {t("site.home2.nearTitle")}
-        </h2>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-success-bg px-2.5 py-0.5 text-caption font-semibold text-success">
-          <span aria-hidden="true" className="relative flex size-2">
-            <span className="absolute inset-0 animate-ping rounded-full bg-success opacity-60 motion-reduce:hidden" />
-            <span className="relative size-2 rounded-full bg-success" />
-          </span>
-          {t("site.home3.live")}
+      </dt>
+      <dd className="m-0 flex flex-col gap-1">
+        <span className="font-heading text-h1 leading-none font-bold text-fg tabular-nums">
+          {value}
         </span>
-      </div>
-      {loading ? (
-        <div role="status" aria-label={t("site.loading")} className="flex flex-col gap-3 px-6 pb-5">
-          {Array.from({ length: LIVE_ROWS }, (_, i) => (
-            <Skeleton key={i} className="h-11 w-full rounded-lg" />
-          ))}
-        </div>
-      ) : rows.length === 0 ? (
-        // nothing open nearby: a quiet drawing instead of an empty white box (upgrade 14 §3)
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 pb-6 text-center">
-          <FacilityBuilding
-            type="health_center"
-            className="aspect-[16/7] w-full max-w-[16rem] rounded-lg opacity-80"
-          />
-          <p className="m-0 text-body-sm text-fg-secondary">{t("site.home.nearEmpty")}</p>
-        </div>
-      ) : (
-        <ul className="m-0 flex flex-1 list-none flex-col p-0">
-          {rows.map((r) => (
-            <li key={r.slug} className="border-t border-hairline">
-              <Link
-                to={`/facilities/${r.slug}`}
-                viewTransition
-                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 px-6 py-3 no-underline transition-colors duration-150 hover:bg-page"
-              >
-                <span className="truncate font-semibold text-fg">{r.name}</span>
-                <span className="text-caption text-fg-secondary tabular-nums">
-                  {waitText(r, t, lang)}
-                </span>
-                <span className="col-span-2">
-                  <WaitMeter result={r} />
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-      <div className="border-t border-hairline px-6">
-        <MoreLink to="/facilities">{t("site.home.viewAll")}</MoreLink>
-      </div>
-    </section>
+        {hint && <span className="text-body-sm text-fg-secondary">{hint}</span>}
+      </dd>
+    </div>
   );
 }
 
@@ -282,7 +210,6 @@ export function LandingPage() {
       ),
     [results.data, sort],
   );
-  const live = listed.filter((r) => r.open_now).slice(0, LIVE_ROWS);
   // real numbers only, from the live listing
   const everywhere = unique(all.data ?? []);
   const openNow = everywhere.filter((r) => r.open_now).length;
@@ -315,7 +242,7 @@ export function LandingPage() {
           <ImigongoPattern opacity={0.05} />
         </div>
         <PageContainer className="flex flex-col gap-12 pt-12 pb-16 lg:gap-16 lg:pt-20 lg:pb-24">
-          <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-16">
+          <div className="grid items-start gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-16">
             <div className="flex min-w-0 animate-rise flex-col items-start gap-7">
               <PageHeading
                 id="hero-title"
@@ -367,6 +294,19 @@ export function LandingPage() {
                   ))}
                 </ul>
               </nav>
+              {/* the second way in, quieter than the search */}
+              <Link
+                to="/check-symptoms"
+                viewTransition
+                className="group inline-flex items-center gap-2 font-semibold text-link no-underline hover:underline"
+              >
+                <Sparkle aria-hidden="true" weight="duotone" className="size-5" />
+                {t("site.home3.symptoms.title")} {t("site.home3.symptoms.action")}
+                <ArrowRight
+                  aria-hidden="true"
+                  className="size-4 transition-transform duration-200 ease-out-quint group-hover:translate-x-0.5"
+                />
+              </Link>
             </div>
 
             <div className="relative min-w-0 animate-rise [animation-delay:80ms]">
@@ -377,73 +317,31 @@ export function LandingPage() {
           </div>
 
           {/*
-           * the bento: live figures, places open now, and help choosing. Big numbers only while
-           * something is open; when everything is closed, one honest line says so instead.
+           * one strip of live figures, read left to right. Numbers only while something is open;
+           * when everything is closed, one honest line says so instead.
            */}
-          <div
-            className={cx(
-              "grid gap-4",
-              allClosed
-                ? "md:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]"
-                : "md:grid-cols-2 lg:grid-cols-4 lg:grid-rows-[auto_auto]",
-            )}
-          >
-            {allClosed ? (
-              <ClosedNotice rows={everywhere} />
-            ) : (
-              <>
-                <Figure
-                  icon={Buildings}
-                  label={t("site.home3.kpi.open")}
-                  value={all.data ? String(openNow) : "–"}
-                  hint={t("site.home3.kpi.openHint", { count: everywhere.length })}
-                />
-                <Figure
-                  icon={UsersThree}
-                  label={t("site.home3.kpi.waiting")}
-                  value={all.data ? String(waitingNow) : "–"}
-                />
-                <LivePanel
-                  rows={live}
-                  loading={results.isPending}
-                  className="md:col-span-2 lg:row-span-2"
-                />
-                {typical !== null && (
-                  <Figure
-                    icon={Hourglass}
-                    label={t("site.home3.kpi.typical")}
-                    value={t("site.home3.kpi.minutes", { count: typical })}
-                  />
-                )}
-              </>
-            )}
-            <Link
-              to="/check-symptoms"
-              viewTransition
-              className="group relative flex min-h-40 flex-col justify-between gap-6 overflow-hidden rounded-panel bg-forest p-6 text-on-forest no-underline shadow-e2"
-            >
-              <span aria-hidden="true" className="absolute inset-0 text-on-forest-accent">
-                <ImigongoPattern opacity={0.07} />
-              </span>
-              <Sparkle
-                aria-hidden="true"
-                weight="duotone"
-                className="relative size-6 text-on-forest-accent"
+          {allClosed ? (
+            <ClosedNotice rows={everywhere} />
+          ) : (
+            <dl className="m-0 grid animate-rise divide-y divide-hairline rounded-panel bg-surface shadow-e2 sm:grid-cols-3 sm:divide-x sm:divide-y-0 [animation-delay:120ms]">
+              <Figure
+                icon={Buildings}
+                label={t("site.home3.kpi.open")}
+                value={all.data ? String(openNow) : "–"}
+                hint={t("site.home3.kpi.openHint", { count: everywhere.length })}
               />
-              <span className="relative flex flex-col gap-1">
-                <span className="font-heading text-h3 font-bold">
-                  {t("site.home3.symptoms.title")}
-                </span>
-                <span className="inline-flex items-center gap-1.5 text-body-sm text-on-forest-muted">
-                  {t("site.home3.symptoms.action")}
-                  <ArrowRight
-                    aria-hidden="true"
-                    className="size-4 transition-transform duration-200 ease-out-quint group-hover:translate-x-0.5"
-                  />
-                </span>
-              </span>
-            </Link>
-          </div>
+              <Figure
+                icon={UsersThree}
+                label={t("site.home3.kpi.waiting")}
+                value={all.data ? String(waitingNow) : "–"}
+              />
+              <Figure
+                icon={Hourglass}
+                label={t("site.home3.kpi.typical")}
+                value={typical !== null ? t("site.home3.kpi.minutes", { count: typical }) : "–"}
+              />
+            </dl>
+          )}
         </PageContainer>
       </section>
 
@@ -461,7 +359,7 @@ export function LandingPage() {
                 <Link
                   to={`/find-care?service=${key}`}
                   viewTransition
-                  className="group flex items-center gap-4 rounded-panel bg-surface p-5 no-underline shadow-e1 transition-[box-shadow,transform] duration-300 ease-out-quint hover:-translate-y-0.5 hover:shadow-e3 motion-reduce:hover:translate-y-0"
+                  className="group flex items-center gap-4 rounded-panel bg-surface p-5 no-underline shadow-e1 transition-[box-shadow,transform] duration-200 ease-out-quint hover:-translate-y-0.5 hover:shadow-e3 motion-reduce:hover:translate-y-0"
                 >
                   <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-[linear-gradient(140deg,var(--color-brand-subtle),var(--color-surface))] text-on-brand-subtle shadow-e1">
                     <CareIcon aria-hidden="true" weight="duotone" className="size-6" />
@@ -476,7 +374,7 @@ export function LandingPage() {
                   </span>
                   <ArrowRight
                     aria-hidden="true"
-                    className="size-5 text-fg-muted transition-[transform,color] duration-300 ease-out-quint group-hover:translate-x-1 group-hover:text-primary"
+                    className="size-5 text-fg-muted transition-[transform,color] duration-200 ease-out-quint group-hover:translate-x-1 group-hover:text-primary"
                   />
                 </Link>
               </li>
