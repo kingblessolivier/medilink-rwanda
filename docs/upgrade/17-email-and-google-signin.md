@@ -4,7 +4,7 @@ Status: Implemented · 2026-11-06 · Decisions 2026-11-05 (product owner)
 
 ## 1. What this adds
 
-- **Every email looks like MediLink.** One branded layout (forest header, white card, emerald button, footer in the reader's language), with a plain-text part beside it. No images, scripts, tracking pixels or remote fonts.
+- **Every email looks like MediLink.** One branded layout (forest header with the white MediLink logo, white card, emerald button, footer in the reader's language with Find care, Help, Privacy, Emergency 912 and Kigali), with a plain-text part beside it. The only image is the logo, one fixed file on the website for every reader, so it tracks nothing (2026-11-19). No scripts, tracking pixels or remote fonts.
 - **Account emails in the account's language** (rw, en, fr): sign-up confirmation, password reset, password changed, "someone tried to sign up with your email", sign-in locked. Notification emails use the same layout. Emails written with Django's `send_mail()` (staff invitations, licence reminders, facility applications) get the layout automatically through `BrandedSMTPBackend`.
 - **Real delivery with Gmail** (decision 2026-11-05): an app password on a Gmail account; a deploy check warns when `EMAIL_URL` still points at the local mail catcher, or when the Gmail sender address doesn't match.
 - **Sign in with Google for patients** on the website and the app (decision 2026-11-05): staff keep password + MFA; a verified Google email that matches a patient account opens it. Rules: [security 03 §1a](../security/03-identity-authentication-sessions.md).

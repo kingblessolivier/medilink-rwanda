@@ -8,6 +8,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 <!-- Wave 1: each sprint writes ONLY under its own heading; consolidated into Added/Changed/Fixed at release. -->
 
+### Emails with the MediLink logo and website links (2026-11-19)
+
+- Changed: every email (account, invitation, notification) has the white MediLink logo in its
+  green header, linking to the website. A footer gives Find care, Help and Privacy links,
+  "Emergency 912" and Kigali, Rwanda, in the reader's language. The inbox preview shows the
+  first sentence. The logo is one fixed file on the website (`PATIENT_APP_URL` +
+  `/brand/medilink-logo-horizontal-white-120.png`, or `EMAIL_LOGO_URL`), https only, so it tracks
+  nothing. Without it the name stays as text.
+
 ### Concurrent saves no longer fail (2026-11-19)
 
 - Fixed: the same push endpoint or app token sent twice at once answered 500 (unique endpoint) for

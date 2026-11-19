@@ -365,6 +365,8 @@ CORS_PREFLIGHT_MAX_AGE = 600
 # Links in emails point at the frontends.
 STAFF_APP_URL = env("STAFF_APP_URL", default="http://localhost:5173")
 PATIENT_APP_URL = env("PATIENT_APP_URL", default="http://localhost:5174")
+# The logo in email headers; default: the white logo on PATIENT_APP_URL (https only).
+EMAIL_LOGO_URL = env("EMAIL_LOGO_URL", default="")
 
 # --------------------------------------------------------------------------------------------
 # Security headers (security 06 §2). Production adds HTTPS/HSTS in prod.py.

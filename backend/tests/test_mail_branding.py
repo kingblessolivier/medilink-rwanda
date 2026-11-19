@@ -1,5 +1,6 @@
 """Branded emails (upgrade 17): one layout for every email, in the reader's language, escaped,
-with no images or tracking, and the HTML part added to plain `send_mail()` messages too."""
+no tracking (the only image is the website's fixed logo), and the HTML part added to plain
+`send_mail()` messages too."""
 
 from __future__ import annotations
 
@@ -36,6 +37,19 @@ def test_layout_escapes_and_turns_the_link_line_into_a_button() -> None:
     # the inline link keeps its sentence and loses the full stop
     assert 'href="https://medilink.example/help"' in html
     assert "<img" not in html and "Merci de ne pas y répondre" in html
+
+
+def test_logo_footer_links_and_preview_come_from_the_website(settings: Any) -> None:
+    settings.PATIENT_APP_URL = "https://medilink.example/"
+    html = brand_html("Booking confirmed", "A visit is booked.\n\nhttps://medilink.example/b", "rw")
+    logo = '<img src="https://medilink.example/brand/medilink-logo-horizontal-white-120.png"'
+    assert logo in html and 'alt="MediLink Rwanda"' in html
+    assert 'href="https://medilink.example/find-care"' in html and ">Shaka ubuvuzi</a>" in html
+    assert 'href="tel:912"' in html and "Kigali, Rwanda" in html
+    # the inbox preview is the first sentence, hidden in the body
+    assert "display:none" in html and "A visit is booked." in html.split("</div>")[0]
+    settings.EMAIL_LOGO_URL = "http://not-https.example/logo.png"
+    assert "<img" not in brand_html("S", "Body", "en")  # never a plain-http image
 
 
 def test_send_branded_sends_text_and_html_in_the_language() -> None:

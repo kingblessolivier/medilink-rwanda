@@ -1,10 +1,12 @@
 """MediLink emails: one branded layout for every message (upgrade 17).
 
 Every email has a plain-text body (what the code writes) and a branded HTML version made from it:
-the MediLink name on a forest band, the text in short paragraphs, the first link as an emerald
-button, other links as plain links, and a footer in the reader's language. Table layout and inline
-styles only, so Gmail, Outlook and phone mail apps show it the same; no images, scripts, tracking
-pixels or remote fonts (security 02 §4), and every value is escaped.
+the MediLink logo on a forest band, the text in short paragraphs, the first link as an emerald
+button, other links as plain links, and a footer in the reader's language (links to the website,
+emergency 912). Table layout and inline styles only, so Gmail, Outlook and phone mail apps show it
+the same. The only image is the logo, one fixed file on the website for every reader (no
+per-person address, so it tracks nothing; decision 2026-11-19); no scripts, tracking pixels or
+remote fonts (security 02 §4), and every value is escaped.
 
 - `send_branded()` builds and sends a message with both parts (account emails).
 - `brand_html()` turns any plain text into the HTML part (the notification channel uses it).
@@ -49,6 +51,29 @@ FOOTER = {
     "fr": "Cet e-mail a été envoyé par MediLink Rwanda. Merci de ne pas y répondre.",
 }
 BUTTON = {"rw": "Fungura", "en": "Open", "fr": "Ouvrir"}
+FONT = "Segoe UI,Roboto,Helvetica,Arial,sans-serif"
+# Footer links on the public website: (path, label per language).
+LINKS = (
+    ("/find-care", {"rw": "Shaka ubuvuzi", "en": "Find care", "fr": "Trouver des soins"}),
+    ("/help", {"rw": "Ubufasha", "en": "Help", "fr": "Aide"}),
+    ("/privacy", {"rw": "Ibanga", "en": "Privacy", "fr": "Confidentialité"}),
+)
+EMERGENCY = {"rw": "Ubutabazi bwihuse", "en": "Emergency", "fr": "Urgence"}
+PLACE = "Kigali, Rwanda"
+LOGO_FILE = "/brand/medilink-logo-horizontal-white-120.png"  # 363 x 120, on the website
+SEPARATOR = '<span style="color:#b5c2ba">&nbsp;&middot;&nbsp;</span>'
+
+
+def site_url() -> str:
+    """The public website (the footer links and the logo come from it)."""
+    return str(getattr(settings, "PATIENT_APP_URL", "") or "").rstrip("/")
+
+
+def logo_url() -> str:
+    """EMAIL_LOGO_URL, or the white logo on the website; empty unless it is https."""
+    url = str(getattr(settings, "EMAIL_LOGO_URL", "") or "") or f"{site_url()}{LOGO_FILE}"
+    return url if url.startswith("https://") else ""
+
 
 _URL = re.compile(r"https?://[^\s<>\"']+")
 
@@ -111,25 +136,86 @@ def brand_html(subject: str, text: str, language: str | None = "en", *, action: 
         "<!doctype html>"
         f'<html lang="{lang}"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
+        '<meta name="color-scheme" content="light">'
+        '<meta name="supported-color-schemes" content="light">'
         f"<title>{escape(subject)}</title></head>"
         f'<body style="margin:0;padding:0;background:{PAGE}">'
+        f"{_preheader(text)}"
         '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
         f'style="background:{PAGE}"><tr><td align="center" style="padding:24px 12px">'
         '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
         'style="max-width:560px;border-collapse:separate">'
-        f'<tr><td style="background:{FOREST};border-radius:16px 16px 0 0;padding:20px 28px;'
-        "font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#ffffff;font-size:18px;"
-        'font-weight:700;letter-spacing:.2px">MediLink '
-        '<span style="font-weight:400;opacity:.75">Rwanda</span></td></tr>'
+        f"{_header()}"
         f'<tr><td style="background:#ffffff;border:1px solid {LINE};border-top:0;'
-        "border-radius:0 0 16px 16px;padding:28px;font-family:Segoe UI,Roboto,Helvetica,Arial,"
-        f'sans-serif;color:{INK};font-size:15px;line-height:1.6">'
+        f"border-radius:0 0 16px 16px;padding:28px;font-family:{FONT};color:{INK};"
+        'font-size:15px;line-height:1.6">'
         f'<h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;color:{INK}">'
         f"{escape(subject)}</h1>{body}</td></tr>"
-        f'<tr><td style="padding:16px 8px;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;'
-        f'color:{MUTED};font-size:12px;line-height:1.5;text-align:center">'
-        f"{escape(FOOTER[lang])}</td></tr>"
+        f"{_footer(lang)}"
         "</table></td></tr></table></body></html>"
+    )
+
+
+def _header() -> str:
+    """The forest band with the white logo; its alt text reads as the name when images are off."""
+    logo = logo_url()
+    if logo:
+        mark = (
+            f'<img src="{escape(logo)}" width="121" height="40" alt="MediLink Rwanda" '
+            'style="display:block;border:0;outline:none;text-decoration:none;height:40px;'
+            f'width:121px;color:#ffffff;font-family:{FONT};font-size:18px;font-weight:700">'
+        )
+    else:
+        mark = (
+            f'<span style="font-family:{FONT};color:#ffffff;font-size:18px;font-weight:700">'
+            'MediLink <span style="font-weight:400;opacity:.75">Rwanda</span></span>'
+        )
+    site = site_url()
+    if site.startswith("https://"):
+        mark = f'<a href="{escape(site)}" style="text-decoration:none">{mark}</a>'
+    return (
+        f'<tr><td style="background:{FOREST};border-radius:16px 16px 0 0;padding:18px 28px">'
+        f"{mark}</td></tr>"
+    )
+
+
+def _footer(lang: str) -> str:
+    """Website links, the emergency number and the place, then the do-not-reply line."""
+    site = site_url()
+    small = f"font-family:{FONT};color:{MUTED};font-size:12px;line-height:1.6;text-align:center"
+    links = ""
+    if site.startswith("http"):
+        items = [
+            f'<a href="{escape(site + path)}" style="color:{EMERALD};text-decoration:none;'
+            f'font-weight:600">{escape(label[lang])}</a>'
+            for path, label in LINKS
+        ]
+        links = f'<tr><td style="padding:18px 8px 4px;{small}">{SEPARATOR.join(items)}</td></tr>'
+    emergency = (
+        f'<tr><td style="padding:4px 8px;{small}">{escape(EMERGENCY[lang])} '
+        f'<a href="tel:912" style="color:{INK};font-weight:700;text-decoration:none">912</a>'
+        f"{SEPARATOR}{PLACE}</td></tr>"
+    )
+    return (
+        f"{links}{emergency}"
+        f'<tr><td style="padding:8px 8px 4px;{small}">{escape(FOOTER[lang])}</td></tr>'
+    )
+
+
+def _preheader(text: str) -> str:
+    """The line mail apps show after the subject in the inbox: the first sentence, not the logo's
+    alt text or a link."""
+    first = next(
+        (
+            line.strip()
+            for line in text.splitlines()
+            if line.strip() and not _URL.fullmatch(line.strip())
+        ),
+        "",
+    )
+    return (
+        '<div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all">'
+        f"{escape(first[:140])}</div>"
     )
 
 
