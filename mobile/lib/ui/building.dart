@@ -33,34 +33,40 @@ String absoluteImageUrl(String url) => url.startsWith('/') ? '${AppConfig.apiBas
 
 /// The facility's logo in a white circle (like a profile picture), placed before its name; or nothing when it has none (or it can't load).
 class FacilityLogo extends StatelessWidget {
-  const FacilityLogo({super.key, required this.url, this.size = 40});
+  const FacilityLogo({super.key, required this.url, this.size = 40, this.gap = 0});
 
   final String? url;
   final double size;
+
+  /// Space between the logo and the name; left out with the logo when it can't load.
+  final double gap;
 
   @override
   Widget build(BuildContext context) {
     final src = url;
     if (src == null || src.isEmpty) return const SizedBox.shrink();
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(color: Palette.hairline),
-      ),
-      // Round, like a profile picture; the logo keeps its proportions inside the circle.
-      child: ClipOval(
-        child: Padding(
-          padding: EdgeInsets.all(size * 0.08),
-          child: Image.network(
-            absoluteImageUrl(src),
-            fit: BoxFit.contain,
-            errorBuilder: (context, _, _) => const SizedBox.shrink(),
+    return Image.network(
+      absoluteImageUrl(src),
+      fit: BoxFit.contain,
+      // The circle shows while the logo loads (the name doesn't jump) and once it has loaded.
+      frameBuilder: (context, child, frame, sync) => Padding(
+        padding: EdgeInsetsDirectional.only(end: gap),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: Palette.hairline),
+          ),
+          // Round, like a profile picture; the logo keeps its proportions inside the circle.
+          child: ClipOval(
+            child: Padding(padding: EdgeInsets.all(size * 0.08), child: child),
           ),
         ),
       ),
+      // A broken logo: no empty circle and no gap, the name moves to the start.
+      errorBuilder: (context, _, _) => const SizedBox.shrink(),
     );
   }
 }

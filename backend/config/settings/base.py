@@ -641,10 +641,28 @@ def mailers_config(email_url: str) -> dict[str, dict[str, Any]]:
     }
 
 
-# Gmail with an app password (decision 2026-11-05):
-#   EMAIL_URL=smtp+tls://you%40gmail.com:<16-letter app password>@smtp.gmail.com:587
-#   DEFAULT_FROM_EMAIL=MediLink Rwanda <you@gmail.com>   (Gmail sends only from its own address)
-MAILERS = mailers_config(env("EMAIL_URL", default="smtp://127.0.0.1:1025").strip())
+def brevo_config(api_key: str) -> dict[str, dict[str, Any]]:
+    """Mail over Brevo's HTTPS API (medilink.core.mail.BrandedBrevoBackend)."""
+    return {
+        "default": {
+            "BACKEND": "medilink.core.mail.BrandedBrevoBackend",
+            "OPTIONS": {"api_key": api_key, "timeout": 10},
+        }
+    }
+
+
+# Production (decision 2026-11-19): Brevo over HTTPS, because Railway blocks outgoing SMTP below
+# its Pro plan. Set BREVO_API_KEY and a sender verified in Brevo (Senders, domains & IPs):
+#   BREVO_API_KEY=xkeysib-...
+#   DEFAULT_FROM_EMAIL=MediLink Rwanda <you@gmail.com>
+# Without BREVO_API_KEY, EMAIL_URL picks an SMTP server (Mailpit in development, or Gmail where
+# SMTP is allowed: smtp+tls://you%40gmail.com:<app password>@smtp.gmail.com:587).
+BREVO_API_KEY = env("BREVO_API_KEY", default="").strip()
+MAILERS = (
+    brevo_config(BREVO_API_KEY)
+    if BREVO_API_KEY
+    else mailers_config(env("EMAIL_URL", default="smtp://127.0.0.1:1025").strip())
+)
 DEFAULT_FROM_EMAIL = env(
     "DEFAULT_FROM_EMAIL", default="MediLink Rwanda <no-reply@medilink.test>"
 ).strip()

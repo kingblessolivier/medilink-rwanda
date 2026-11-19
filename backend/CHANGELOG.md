@@ -8,6 +8,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 <!-- Wave 1: each sprint writes ONLY under its own heading; consolidated into Added/Changed/Fixed at release. -->
 
+### Email over Brevo, "it's time" reminders (2026-11-19)
+
+- Fixed: no email left production. Railway blocks outgoing SMTP below its Pro plan, so Gmail over
+  SMTP never connected. With `BREVO_API_KEY` set, every email (accounts, invitations,
+  notifications) goes through Brevo's HTTPS API with the same branded layout. `EMAIL_URL` (SMTP)
+  stays for Mailpit and hosts that allow SMTP. `send_test_email` shows Brevo's reason when it
+  refuses (for example an unverified sender). A notification email retries only when Brevo says
+  it may pass later (429, 5xx).
+- Added: two visit reminders on top of each patient's chosen ones: "Your visit is in 15 minutes"
+  and "It's time for your visit" at the start (`scheduling.booking.soon` and
+  `scheduling.booking.now`; in-app, push, email). The reminder job runs every minute instead of
+  every 5, and "it's time" still goes out up to 10 minutes late if the job was down.
+
 ### Logos load again (2026-11-19)
 
 - Fixed: every logo showed as a broken image. Logo links asked Cloudinary for "pad" with auto

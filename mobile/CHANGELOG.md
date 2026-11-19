@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 
 ## [Unreleased]
 
+### 1.3.0 (2026-11-19)
+
+- Added: visit reminders on the phone. For each confirmed visit the app schedules notifications 24
+  hours, 2 hours and 15 minutes before, and "It's time for your visit" at the start, with the
+  facility, the time and who the visit is for. They come without a connection and after the phone
+  restarts; tapping one opens the booking. The app asks once for permission to notify (Android
+  13+). Reminders follow the upcoming visits (booked, moved, cancelled; checked again when the app
+  comes back) and are removed on sign-out. When the phone allows exact alarms they come on the
+  minute; otherwise Android may send them a little late.
+
+### 1.2.4 (2026-11-19)
+
+- Fixed: a facility logo that can't load no longer leaves an empty white circle before the name
+  on the Care cards, the Home "Near you" cards and the facility page; the name moves to the start.
+
 ### 1.2.3 (2026-11-18)
 
 - Changed: the facility logo is round, like a profile picture, at the start of the facility's

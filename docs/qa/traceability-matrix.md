@@ -251,10 +251,10 @@ Source: [09 · Notifications](../analysis/09-notifications-and-communication.md)
 | FR-NOT-01 | Event-driven notification service with channel adapters | P1 | S9 | Backend | UT, API | In progress |
 | FR-NOT-02 | In-app inbox and live updates | P1 | S9 | Both | API, E2E | In progress |
 | FR-NOT-03 | Web push: timely permission prompt, push-off banner | P1 | S9 | Both | CMP, E2E, SEC | In progress |
-| FR-NOT-04 | Email notifications with documents and calendar files | P1 | S9 | Backend | API | In progress |
+| FR-NOT-04 | Email notifications with documents and calendar files | P1 | S9, Brevo HTTPS API in production (2026-11-19: Railway blocks SMTP) | Backend | API, UT (`test_mail_brevo.py`) | In progress |
 | FR-NOT-05 | Priority levels, quiet hours, fallback rules | P1 | S9 | Backend | BR | In progress |
 | FR-NOT-06 | Patient, staff and facility preferences | P1 | S9 | Both | API, CMP | In progress |
-| FR-NOT-07 | Notification catalogue (analysis 09 §4) | P1 | S9, S9b, U8 W7 (#206: visit reminders at the patient's offsets, follow-up and care-schedule reminders, result ready, "almost your turn" from every queue move, counter call) | Both | API, INS, BR (`test_follow_through.py`) | In progress |
+| FR-NOT-07 | Notification catalogue (analysis 09 §4) | P1 | S9, S9b, U8 W7 (#206: visit reminders at the patient's offsets plus "15 minutes" and "it's time" at the start, follow-up and care-schedule reminders, result ready, "almost your turn" from every queue move, counter call) | Both | API, INS, BR (`test_follow_through.py`) | In progress |
 | FR-NOT-08 | Guardians receive dependents' notifications | P1 | S9 | Backend | BR | In progress |
 | FR-NOT-09 | Trilingual versioned templates; no clinical details | P1 | S9 | Backend | UT, INS | In progress |
 | FR-NOT-10 | Delivery log with status and failures; retries | P1 | S9 | Backend | API | In progress |

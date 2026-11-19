@@ -31,6 +31,9 @@ MERGE_REQUESTED = "patients.merge.requested"
 TICKET_CALLED_DESK = "queue.ticket.called_desk"
 LAB_RESULT_READY = "clinical.lab_result.ready"
 BOOKING_REMINDER = "scheduling.booking.reminder"
+# "It's time" (decision 2026-11-19): 15 minutes before and at the start, always on
+BOOKING_SOON = "scheduling.booking.soon"
+BOOKING_NOW = "scheduling.booking.now"
 FOLLOW_UP_DUE = "scheduling.follow_up.due"
 CARE_SCHEDULE_DUE = "scheduling.care_schedule.due"
 
@@ -255,6 +258,25 @@ T_REMINDER = {
     ),
     "en": ("Visit reminder", "Reminder: a visit at $facility_name on $date at $time."),
     "fr": ("Rappel de visite", "Rappel : une visite à $facility_name le $date à $time."),
+}
+T_SOON = {
+    "rw": (
+        "Hasigaye iminota 15",
+        "Gahunda yo kwivuza kuri $facility_name iratangira mu minota 15, saa $time.",
+    ),
+    "en": ("Your visit is in 15 minutes", "Your visit at $facility_name starts at $time."),
+    "fr": ("Votre visite dans 15 minutes", "Votre visite à $facility_name commence à $time."),
+}
+T_NOW = {
+    "rw": (
+        "Igihe kirageze",
+        "Igihe cya gahunda yanyu kuri $facility_name kirageze (saa $time).",
+    ),
+    "en": ("It's time for your visit", "Your visit at $facility_name is now ($time)."),
+    "fr": (
+        "C'est l'heure de votre visite",
+        "Votre visite à $facility_name, c'est maintenant ($time).",
+    ),
 }
 T_FOLLOW_UP = {
     "rw": (
@@ -490,6 +512,21 @@ EVENTS: list[EventDefinition] = [
         dedupe="{type}:{booking_id}",  # the reminder job passes one key per offset
         rate_limit=(20, timedelta(hours=1)),
         templates=_texts(PATIENT_ALL, T_REMINDER),
+    ),
+    *(
+        EventDefinition(
+            type=event,
+            audience="patient",
+            priority="important",
+            channels=PATIENT_ALL,
+            placeholders=WHEN,
+            data_keys=frozenset({"booking_id"}),
+            action_path=APPOINTMENT_PATH,
+            dedupe="{type}:{booking_id}",
+            rate_limit=(20, timedelta(hours=1)),
+            templates=_texts(PATIENT_ALL, texts),
+        )
+        for event, texts in ((BOOKING_SOON, T_SOON), (BOOKING_NOW, T_NOW))
     ),
     EventDefinition(
         type=FOLLOW_UP_DUE,

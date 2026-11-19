@@ -18,9 +18,9 @@ paths = ['''^frontend/.*\.test\.tsx?$''']
 regexes = ['''a-long-passphrase-2026''']
 
 [[allowlists]]
-description = "Random object-storage keys (UUIDs) in the S3 storage test (S1-B9); not a secret"
+description = "Random object-storage keys (UUIDs) in the S3 and Cloudinary storage tests (S1-B9); not a secret"
 condition = "AND"
-paths = ['''^backend/tests/uploads/test_processing\.py$''']
+paths = ['''^backend/tests/uploads/test_(processing|cloudinary)\.py$''']
 regexes = ['''0b8f4c56-8f1e-4a55-9c55-4f0c5a6f1e0[12]''']
 
 [[allowlists]]

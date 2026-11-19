@@ -532,7 +532,9 @@ The catalogue events of [analysis 09](../../analysis/09-notifications-and-commun
 | `patients.merge.requested` | `merge_requested` (S3) | Platform admins | important | in-app | — |
 | `queue.ticket.called_desk` | `on_ticket_event` with `call` and no room to name (W7 #206) | Patient | critical (TTL 30 min) | in-app, push | ticket number, facility name |
 | `clinical.lab_result.ready` | `lab_result_released` (clinical, W7 #206) | Patient (and guardians; delegates only for unrestricted consultations) | important | in-app, push, email | facility name; never the test; one per visit and hour |
-| `scheduling.booking.reminder` | reminder job every 5 minutes (W7 #206) | Patient (and guardians) | important (for today when the visit is today) | in-app, push, email | facility name, date, time; at each recipient's reminder offsets (default 24 h and 2 h), once per offset |
+| `scheduling.booking.reminder` | reminder job every minute (W7 #206) | Patient (and guardians) | important (for today when the visit is today) | in-app, push, email | facility name, date, time; at each recipient's reminder offsets (default 24 h and 2 h), once per offset |
+| `scheduling.booking.soon` | reminder job (2026-11-19) | Patient (and guardians) | important, for today | in-app, push, email | facility name, time; 15 minutes before, always, once |
+| `scheduling.booking.now` | reminder job (2026-11-19) | Patient (and guardians) | important, for today | in-app, push, email | facility name, time; at the start (up to 10 minutes late), always, once |
 | `scheduling.follow_up.due` | reminder job (W7 #206): follow-up dates with no booking | Patient (self and guardian accounts) | important | in-app, push, email | facility name, date; the day before 08:00 and on the morning 07:00 |
 | `scheduling.care_schedule.due` | reminder job (W7 #206): planned vaccinations and antenatal visits | Patient (self and guardian accounts) | important | in-app, push, email | facility name, date; never the kind or the note; the day before 08:00 and on the morning 07:00 |
 

@@ -83,14 +83,17 @@ def check_deploy_mfa(app_configs: Any = None, **kwargs: Any) -> list[CheckMessag
 def check_deploy_email(app_configs: Any = None, **kwargs: Any) -> list[CheckMessage]:
     """Emails (sign-up links, password resets, invitations) need a real mail server (upgrade 17).
     The development default (Mailpit on 127.0.0.1:1025) silently delivers nowhere in production."""
-    options = settings.MAILERS.get("default", {}).get("OPTIONS", {})
+    mailer = settings.MAILERS.get("default", {})
+    if str(mailer.get("BACKEND", "")).endswith("BrevoBackend"):
+        return []  # HTTPS API: the sender is checked by Brevo (send_test_email shows its answer)
+    options = mailer.get("OPTIONS", {})
     host = str(options.get("host", ""))
     messages: list[CheckMessage] = []
     if host in {"", "localhost", "127.0.0.1", "mailpit"}:
         messages.append(
             Warning(
                 "EMAIL_URL points at a local mail catcher: no email reaches anyone. Set "
-                "EMAIL_URL (e.g. smtp+tls://you%40gmail.com:<app password>@smtp.gmail.com:587).",
+                "BREVO_API_KEY (Railway blocks outgoing SMTP), or EMAIL_URL where SMTP is allowed.",
                 id="medilink.W006",
             )
         )

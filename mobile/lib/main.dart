@@ -10,6 +10,9 @@ import 'app/router.dart';
 import 'app/strings.dart';
 import 'app/theme.dart';
 import 'data/appearance.dart';
+import 'data/models.dart';
+import 'data/providers.dart';
+import 'data/reminders.dart';
 import 'data/session.dart';
 
 void main() {
@@ -39,6 +42,47 @@ class _MediLinkAppState extends ConsumerState<MediLinkApp> with WidgetsBindingOb
     Palette.dark = _wantsDark(ref.read(appearanceProvider));
     // Me → Settings → Appearance: like the phone, light or dark.
     ref.listenManual(appearanceProvider, (_, next) => _applyDark(_wantsDark(next)));
+    // Visit reminders on the phone follow the upcoming visits while signed in.
+    VisitReminders.instance.onOpen = (id) => _go('/visits/booking/$id');
+    VisitReminders.instance.init().then((_) {
+      if (!mounted) return;
+      ref.listenManual(authProvider, (_, phase) => _followVisits(phase), fireImmediately: true);
+      ref.listenManual(languageProvider, (_, _) => _syncReminders());
+    });
+  }
+
+  ProviderSubscription<AsyncValue<Cached<List<Booking>>>>? _visits;
+  List<Booking>? _lastVisits;
+
+  void _followVisits(AuthPhase phase) {
+    if (phase == AuthPhase.signedOut) {
+      _visits?.close();
+      _visits = null;
+      _lastVisits = null;
+      VisitReminders.instance.clear();
+    } else if (phase == AuthPhase.ready && _visits == null) {
+      _visits = ref.listenManual(bookingsProvider('upcoming'), (_, next) {
+        final visits = next.value?.data;
+        if (visits == null) return;
+        _lastVisits = visits;
+        _syncReminders();
+      }, fireImmediately: true);
+    }
+  }
+
+  void _syncReminders() {
+    final visits = _lastVisits;
+    if (visits == null) return;
+    VisitReminders.instance.sync(visits, Strings.forCode(ref.read(languageProvider)));
+  }
+
+  /// Opens [route] now, or after the PIN when the app is locked.
+  void _go(String route) {
+    if (ref.read(authProvider) == AuthPhase.ready) {
+      ref.read(routerProvider).go(route);
+    } else {
+      ref.read(pendingRouteProvider.notifier).set(route);
+    }
   }
 
   bool _wantsDark(Appearance appearance) => switch (appearance) {
@@ -81,6 +125,9 @@ class _MediLinkAppState extends ConsumerState<MediLinkApp> with WidgetsBindingOb
       _backgroundedAt = null;
       if (since != null && DateTime.now().difference(since) >= AppConfig.autoLockAfter) {
         ref.read(authProvider.notifier).lock();
+      } else if (since != null && _visits != null) {
+        // a visit moved or cancelled by the facility: the phone's reminders follow
+        ref.invalidate(bookingsProvider('upcoming'));
       }
     }
   }

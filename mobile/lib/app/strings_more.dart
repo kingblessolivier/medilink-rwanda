@@ -11,6 +11,14 @@ extension MoreStrings on Strings {
 
 const _more = <String, Map<String, String>>{
   'en': {
+    // v1.3.0: visit reminders on the phone
+    "remind.channel": 'Visit reminders',
+    "remind.dayBefore": 'Visit tomorrow',
+    "remind.twoHours": 'Visit in 2 hours',
+    "remind.soon": 'Your visit is in 15 minutes',
+    "remind.now": "It's time for your visit",
+    "remind.at": 'at {time}',
+
     // v1.2.1: search by insurance
     "myInsurance": 'My insurance',
     "insurerOnly": 'Only places that take {name}.',
@@ -342,6 +350,14 @@ const _more = <String, Map<String, String>>{
     'appearance.dark': 'Dark',
   },
   'rw': {
+    // v1.3.0: visit reminders on the phone
+    "remind.channel": 'Kwibutsa gahunda',
+    "remind.dayBefore": 'Gahunda ni ejo',
+    "remind.twoHours": 'Hasigaye amasaha 2',
+    "remind.soon": 'Hasigaye iminota 15',
+    "remind.now": 'Igihe kirageze',
+    "remind.at": 'saa {time}',
+
     // v1.2.1: search by insurance
     "myInsurance": 'Ubwishingizi bwanjye',
     "insurerOnly": 'Ahakira {name} gusa.',
@@ -674,6 +690,14 @@ const _more = <String, Map<String, String>>{
   },
   // French: the website's wording where it exists; the rest needs a native-speaker review.
   'fr': {
+    // v1.3.0: visit reminders on the phone
+    "remind.channel": 'Rappels de visite',
+    "remind.dayBefore": 'Visite demain',
+    "remind.twoHours": 'Visite dans 2 heures',
+    "remind.soon": 'Votre visite dans 15 minutes',
+    "remind.now": "C'est l'heure de votre visite",
+    "remind.at": 'à {time}',
+
     // v1.2.1: search by insurance
     "myInsurance": 'Mon assurance',
     "insurerOnly": 'Seulement les lieux qui acceptent {name}.',

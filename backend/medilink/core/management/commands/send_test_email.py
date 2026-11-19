@@ -14,7 +14,7 @@ from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.core.validators import validate_email
 
-from medilink.core.mail import send_branded
+from medilink.core.mail import BrevoError, send_branded
 
 TEXT = {
     "en": (
@@ -46,7 +46,12 @@ class Command(BaseCommand):
         except ValidationError as exc:
             raise CommandError("Give a valid email address.") from exc
         subject, body = TEXT[options["language"]]
-        host = settings.MAILERS.get("default", {}).get("OPTIONS", {}).get("host", "?")
+        mailer = settings.MAILERS.get("default", {})
+        host = (
+            "Brevo (HTTPS)"
+            if str(mailer.get("BACKEND", "")).endswith("BrevoBackend")
+            else mailer.get("OPTIONS", {}).get("host", "?")
+        )
         self.stdout.write(f"Sending through {host} as {settings.DEFAULT_FROM_EMAIL} ...")
         try:
             send_branded(
@@ -60,6 +65,11 @@ class Command(BaseCommand):
                 "The mail server refused the login. For Gmail use a 16-letter app password "
                 "(Google account > Security > 2-Step Verification > App passwords), not the "
                 "normal password, and write @ in the address as %40 in EMAIL_URL."
+            ) from exc
+        except BrevoError as exc:
+            raise CommandError(
+                f"{exc}. Check BREVO_API_KEY, and that DEFAULT_FROM_EMAIL is a sender verified "
+                "in Brevo (Senders, domains & IPs)."
             ) from exc
         except (smtplib.SMTPException, OSError) as exc:
             raise CommandError(f"Sending failed: {type(exc).__name__}: {exc}") from exc

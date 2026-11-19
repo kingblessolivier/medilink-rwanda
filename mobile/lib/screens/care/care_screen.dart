@@ -416,10 +416,7 @@ class FacilityCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    if (facility.logoUrl != null) ...[
-                      FacilityLogo(url: facility.logoUrl, size: 40),
-                      const SizedBox(width: Space.md),
-                    ],
+                    FacilityLogo(url: facility.logoUrl, size: 40, gap: Space.md),
                     Expanded(child: Text(facility.name, style: theme.textTheme.titleLarge)),
                   ],
                 ),

@@ -10,7 +10,7 @@ from typing import Any, ClassVar
 
 from django.core.mail import EmailMultiAlternatives
 
-from medilink.core.mail import LANGUAGE_HEADER, brand_html
+from medilink.core.mail import LANGUAGE_HEADER, BrevoError, brand_html
 from medilink.notifications.channels import Message, SendResult, Target
 from medilink.notifications.templates import LIMITS, TextLimits
 
@@ -59,6 +59,10 @@ class EmailAdapter:
             return SendResult(status="failed", retryable=True, failure_reason="timeout")
         except smtplib.SMTPResponseException as exc:
             retryable = 400 <= exc.smtp_code < 500
+            return SendResult(status="failed", retryable=retryable, failure_reason="provider_error")
+        except BrevoError as exc:
+            # 429 and 5xx pass; other 4xx (bad key, unverified sender, bad address) won't
+            retryable = exc.status == 429 or exc.status >= 500
             return SendResult(status="failed", retryable=retryable, failure_reason="provider_error")
         except (smtplib.SMTPException, OSError):
             return SendResult(status="failed", retryable=True, failure_reason="provider_error")

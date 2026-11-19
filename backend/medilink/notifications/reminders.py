@@ -2,7 +2,8 @@
 moment, so each reminder goes out once however often the job runs.
 
 - Booked visits: each patient's reminder offsets (preferences, default 24 hours and 2 hours
-  before).
+  before), and always "15 minutes" and "it's time" at the start (decision 2026-11-19). The start
+  one still goes out up to NOW_GRACE after the start (the job runs every minute).
 - Follow-up dates the doctor set without a booking, and planned vaccinations and antenatal
   visits (the care schedule): the day before at 08:00 and on the morning at 07:00 (Kigali).
 
@@ -34,6 +35,9 @@ logger = logging.getLogger("medilink.notifications")
 
 KIGALI = preferences.conf_tz()
 MAX_OFFSET = dt.timedelta(minutes=10_080)  # the largest offset a patient may choose (7 days)
+SOON = dt.timedelta(minutes=15)
+NOW_GRACE = dt.timedelta(minutes=10)  # a late "it's time" still helps; later than this it doesn't
+TIME_EVENTS = {"soon": ev.BOOKING_SOON, "now": ev.BOOKING_NOW}
 DAY_BEFORE_AT = dt.time(8, 0)
 ON_THE_DAY_AT = dt.time(7, 0)
 
@@ -80,7 +84,7 @@ def _bookings(facility_id: Any, name: str, now: dt.datetime, offsets: _Offsets) 
     rows = Booking.objects.filter(
         facility_id=facility_id,
         status=BookingStatus.CONFIRMED,
-        starts_at__gt=now,
+        starts_at__gt=now - NOW_GRACE,
         starts_at__lte=now + MAX_OFFSET,
     ).order_by("starts_at")
     for booking in rows:
@@ -88,12 +92,12 @@ def _bookings(facility_id: Any, name: str, now: dt.datetime, offsets: _Offsets) 
             moments = [
                 (str(m), booking.starts_at - dt.timedelta(minutes=m))
                 for m in offsets(recipient.user_id)
-            ]
+            ] + [("soon", booking.starts_at - SOON), ("now", booking.starts_at)]
             key = latest_due(moments, booking.created_at, now)
             if key is None:
                 continue
             sent += _send(
-                ev.BOOKING_REMINDER,
+                TIME_EVENTS.get(key, ev.BOOKING_REMINDER),
                 recipient,
                 {
                     "facility_name": name,
