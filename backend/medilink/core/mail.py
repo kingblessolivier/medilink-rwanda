@@ -11,17 +11,29 @@ pixels or remote fonts (security 02 §4), and every value is escaped.
 - `BrandedSMTPBackend` adds the HTML part to any plain-only message on the way out, so emails
   written with Django's `send_mail()` (staff invitations, licence reminders, applications) get the
   same look without each sender changing.
+- `BrandedBrevoBackend` does the same and sends over Brevo's HTTPS API (production on Railway,
+  where outgoing SMTP is blocked).
 """
 
 from __future__ import annotations
 
+import base64
+import json
+import logging
 import re
+import urllib.error
+import urllib.request
 from collections.abc import Iterable, Sequence
+from email.utils import parseaddr
 from html import escape
 from typing import Any
 
+from django.conf import settings
 from django.core.mail import EmailMessage, EmailMultiAlternatives
+from django.core.mail.backends.base import BaseEmailBackend
 from django.core.mail.backends.smtp import EmailBackend as SMTPBackend
+
+logger = logging.getLogger("medilink.mail")
 
 FOREST = "#123d2b"
 EMERALD = "#168451"
@@ -171,3 +183,131 @@ class BrandingMixin:
 
 class BrandedSMTPBackend(BrandingMixin, SMTPBackend):
     """Django's SMTP backend that adds the branded HTML part to plain-only messages."""
+
+
+# --------------------------------------------------------------------------------------------
+# Brevo: email over HTTPS. Railway blocks outgoing SMTP below its Pro plan, so Gmail over SMTP
+# never connects there; Brevo's API is plain HTTPS (decision 2026-11-19).
+# https://developers.brevo.com/reference/sendtransacemail
+# --------------------------------------------------------------------------------------------
+BREVO_URL = "https://api.brevo.com/v3/smtp/email"
+# Headers Brevo builds itself; passing them as custom headers is refused or ignored.
+_BREVO_OWN_HEADERS = {"from", "to", "cc", "bcc", "reply-to", "subject", "content-type"}
+
+
+class BrevoError(Exception):
+    """Brevo refused a message: `status` is the HTTP status, the text is Brevo's reason."""
+
+    def __init__(self, status: int, reason: str) -> None:
+        super().__init__(f"Brevo answered {status}: {reason}")
+        self.status = status
+
+
+def _contact(address: str) -> dict[str, str]:
+    name, email = parseaddr(address)
+    return {"email": email, "name": name} if name else {"email": email}
+
+
+def _attachment(item: Any) -> dict[str, str] | None:
+    """A Django attachment as Brevo wants it (name + base64 content); MIME parts are skipped."""
+    if not isinstance(item, tuple) or len(item) < 2:
+        return None
+    filename, content = item[0], item[1]
+    raw = content.encode() if isinstance(content, str) else bytes(content)
+    return {"name": str(filename or "attachment"), "content": base64.b64encode(raw).decode()}
+
+
+def brevo_payload(message: EmailMessage) -> dict[str, Any]:
+    """The JSON body of Brevo's "send a transactional email" call for one Django message."""
+    sender = message.from_email or str(settings.DEFAULT_FROM_EMAIL)
+    to, bcc = list(message.to), list(message.bcc)
+    if not to:  # Brevo needs at least one "to"
+        to, bcc = bcc, []
+    payload: dict[str, Any] = {
+        "sender": _contact(sender),
+        "to": [_contact(a) for a in to],
+        "subject": str(message.subject),
+    }
+    if message.cc:
+        payload["cc"] = [_contact(a) for a in message.cc]
+    if bcc:
+        payload["bcc"] = [_contact(a) for a in bcc]
+    if message.reply_to:
+        payload["replyTo"] = _contact(message.reply_to[0])
+    if getattr(message, "content_subtype", "plain") == "html":
+        payload["htmlContent"] = str(message.body)
+    else:
+        payload["textContent"] = str(message.body)
+    for alternative in getattr(message, "alternatives", None) or []:
+        content, mimetype = (
+            (alternative.content, alternative.mimetype)
+            if hasattr(alternative, "mimetype")
+            else (alternative[0], alternative[1])
+        )
+        if mimetype == "text/html":
+            payload["htmlContent"] = str(content)
+    headers = {
+        k: str(v)
+        for k, v in (message.extra_headers or {}).items()
+        if k.lower() not in _BREVO_OWN_HEADERS
+    }
+    if headers:
+        payload["headers"] = headers
+    attachments = [a for a in map(_attachment, message.attachments or []) if a]
+    if attachments:
+        payload["attachment"] = attachments
+    return payload
+
+
+class BrevoBackend(BaseEmailBackend):
+    """Sends each message with one HTTPS call to Brevo (standard library only, no SDK)."""
+
+    def __init__(
+        self, api_key: str = "", timeout: float = 10, fail_silently: bool = False, **kwargs: Any
+    ) -> None:
+        # Django 6.1: the backend keeps fail_silently itself (like the SMTP backend)
+        super().__init__(**kwargs)
+        self.fail_silently = fail_silently
+        self.api_key = api_key
+        self.timeout = timeout
+
+    def _post(self, payload: dict[str, Any]) -> None:
+        request = urllib.request.Request(
+            BREVO_URL,
+            data=json.dumps(payload).encode(),
+            method="POST",
+            headers={
+                "api-key": self.api_key,
+                "accept": "application/json",
+                "content-type": "application/json",
+            },
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout):  # noqa: S310
+                return
+        except urllib.error.HTTPError as exc:
+            # Brevo's error body says why (unverified sender, bad key, ...); it holds no secrets.
+            try:
+                reason = json.loads(exc.read() or b"{}").get("message") or exc.reason
+            except ValueError:
+                reason = exc.reason
+            raise BrevoError(exc.code, str(reason)) from exc
+
+    def send_messages(self, email_messages: Sequence[EmailMessage]) -> int:
+        sent = 0
+        for message in email_messages or []:
+            if not message.recipients():
+                continue
+            try:
+                self._post(brevo_payload(message))
+            except (BrevoError, OSError):
+                logger.warning("email.brevo_failed", exc_info=True)
+                if not self.fail_silently:
+                    raise
+                continue
+            sent += 1
+        return sent
+
+
+class BrandedBrevoBackend(BrandingMixin, BrevoBackend):
+    """The Brevo backend that adds the branded HTML part to plain-only messages."""

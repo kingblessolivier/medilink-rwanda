@@ -58,4 +58,25 @@ void main() {
     expect(find.byType(FacilityBuilding), findsOneWidget);
     expect(find.text('MJ'), findsOneWidget);
   });
+
+  testWidgets('a logo that cannot load leaves no empty circle and no gap', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Row(
+          children: [
+            FacilityLogo(url: 'https://res.cloudinary.com/x/broken.png', size: 40, gap: 12),
+            Expanded(child: Text('Kigali')),
+          ],
+        ),
+      ),
+    );
+    // While it loads: the circle and the gap keep their place.
+    expect(tester.getSize(find.byType(FacilityLogo)), const Size(52, 40));
+
+    // Tests answer every request with HTTP 400: the logo fails.
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 200)));
+    await tester.pump();
+    expect(tester.getSize(find.byType(FacilityLogo)).width, 0);
+    expect(tester.getTopLeft(find.text('Kigali')).dx, 0);
+  });
 }

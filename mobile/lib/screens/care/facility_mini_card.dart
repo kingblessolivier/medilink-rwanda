@@ -65,10 +65,7 @@ class FacilityMiniCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    if (f.logoUrl != null) ...[
-                      FacilityLogo(url: f.logoUrl, size: 32),
-                      const SizedBox(width: Space.sm),
-                    ],
+                    FacilityLogo(url: f.logoUrl, size: 32, gap: Space.sm),
                     Expanded(
                       child: Text(f.name, style: theme.textTheme.titleMedium, maxLines: 2, overflow: TextOverflow.ellipsis),
                     ),

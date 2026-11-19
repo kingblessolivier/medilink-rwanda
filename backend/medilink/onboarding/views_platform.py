@@ -651,9 +651,8 @@ class FacilitiesSummaryView(_Platform):
     )
     def get(self, request: Request) -> Response:
         # Reviewed: the platform admin summary covers every facility by design.
-        rows = [
-            s.facility_data(f) for f in Facility.objects.all()
-        ]  # nosemgrep: medilink-objects-all-in-view
+        facilities = Facility.objects.all()  # nosemgrep: medilink-objects-all-in-view
+        rows = [s.facility_data(f) for f in facilities]
         by_status: dict[str, int] = {}
         for r in rows:
             by_status[r["status"]] = by_status.get(r["status"], 0) + 1

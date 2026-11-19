@@ -11,10 +11,11 @@ BEAT_SCHEDULE = {
         "task": "medilink.notifications.tasks.unread_fallback",
         "schedule": 60.0,
     },
-    # W7 (upgrade 13): reminders before booked visits, follow-up dates and the care schedule
+    # W7 (upgrade 13): reminders before booked visits, follow-up dates and the care schedule;
+    # every minute so "it's time" goes out at the start (2026-11-19)
     "notifications.send_reminders": {
         "task": "medilink.notifications.tasks.send_reminders",
-        "schedule": crontab(minute="*/5"),
+        "schedule": 60.0,
     },
     "notifications.cleanup": {
         "task": "medilink.notifications.tasks.cleanup",

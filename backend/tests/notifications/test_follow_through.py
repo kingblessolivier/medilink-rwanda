@@ -92,6 +92,46 @@ def test_booked_visit_reminders_go_once_per_offset(
     assert {n.action_path for n in sent} == {f"/dashboard/appointments/{made.json()['id']}"}
 
 
+def test_it_is_time_15_minutes_before_and_at_the_start(
+    clock: Clock,  # noqa: F811
+    clinic: Any,  # noqa: F811
+    bookable: dict[str, Any],  # noqa: F811
+) -> None:
+    client, user = patient_client("on-time@example.test", "Uwase Ontime")
+    slot = first_slot(clinic, bookable["service_id"], after=at(clock, 2, 7))  # Wednesday 08:00
+    at(clock, 0, 9)
+    assert book(client, user, slot).status_code == 201
+
+    assert run(clinic, at(clock, 2, 6, 1)) == 1  # 2 hours before (the usual reminder)
+    assert run(clinic, at(clock, 2, 7, 44)) == 0
+    assert run(clinic, at(clock, 2, 7, 45)) == 1  # 15 minutes before
+    assert run(clinic, at(clock, 2, 7, 50)) == 0
+    assert run(clinic, at(clock, 2, 8, 0)) == 1  # at the start
+    assert run(clinic, at(clock, 2, 8, 1)) == 0  # never twice
+    soon, now = notices(user, ev.BOOKING_SOON), notices(user, ev.BOOKING_NOW)
+    assert len(soon) == len(now) == 1
+    assert "Gisozi Clinic" in now[0].body
+    assert soon[0].title != now[0].title
+
+
+def test_it_is_time_goes_late_only_within_the_grace(
+    clock: Clock,  # noqa: F811
+    clinic: Any,  # noqa: F811
+    bookable: dict[str, Any],  # noqa: F811
+) -> None:
+    client, user = patient_client("late-job@example.test", "Uwase Late")
+    slot = first_slot(clinic, bookable["service_id"], after=at(clock, 2, 7))  # Wednesday 08:00
+    at(clock, 0, 9)
+    assert book(client, user, slot).status_code == 201
+
+    # the job was down from before the 15-minute moment: only "it's time" goes, a few minutes late
+    assert run(clinic, at(clock, 2, 8, 4)) == 1
+    assert len(notices(user, ev.BOOKING_NOW)) == 1
+    assert notices(user, ev.BOOKING_SOON) == []
+    # well past the start nothing more goes out
+    assert run(clinic, at(clock, 2, 8, 30)) == 0
+
+
 def test_care_schedule_entries_reach_the_patient_without_clinical_words(
     clock: Clock,  # noqa: F811
     clinic: Any,  # noqa: F811
