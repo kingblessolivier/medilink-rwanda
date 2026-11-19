@@ -8,6 +8,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 <!-- Wave 1: each sprint writes ONLY under its own heading; consolidated into Added/Changed/Fixed at release. -->
 
+### Concurrent saves no longer fail (2026-11-19)
+
+- Fixed: the same push endpoint or app token sent twice at once answered 500 (unique endpoint) for
+  the second; saves of one endpoint now take turns, so the second updates the first's row.
+- Fixed: two listing refreshes of one facility at once (a save and the 10-minute job) failed on
+  `facilities_listing_once`; refreshes of one facility now take turns.
+
 ### Push to the phone app (2026-11-19)
 
 - Added: the phone app gets push notifications through Firebase Cloud Messaging. The app sends

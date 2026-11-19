@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.models import Q
 from django.utils import timezone
 
@@ -27,6 +27,9 @@ from medilink.scheduling.slots import bookable
 from medilink.tenancy.models import Facility, FacilityStatus, FacilityType
 from medilink.visits.models import DutyState, Stage, Ticket, TicketState
 from medilink.visits.services import doctors_for
+
+# pg_advisory_xact_lock(class, key) class for listing refreshes (int4; the key is the facility)
+LISTING_LOCK = 7310
 
 LEVEL_BY_TYPE: dict[str, str] = {
     FacilityType.HEALTH_POST: "primary",
@@ -257,6 +260,13 @@ def refresh(facility_id: Any) -> int:
             )
         )
     with transaction.atomic():
+        # Two refreshes of one facility at once (a save and the 10-minute job) take turns: each
+        # one's delete would miss the other's new rows and the second insert would break
+        # `facilities_listing_once`.
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT pg_advisory_xact_lock(%s, hashtext(%s))", [LISTING_LOCK, str(facility_id)]
+            )
         PublicListing.objects.filter(facility_id=facility_id).delete()
         PublicListing.objects.bulk_create(rows)
     return len(rows)

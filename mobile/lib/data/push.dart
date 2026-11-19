@@ -69,7 +69,7 @@ class PhonePush {
       FirebaseMessaging.onMessageOpenedApp.listen((m) => onOpen?.call(pushRoute(m.data)));
       FirebaseMessaging.instance.onTokenRefresh.listen((token) {
         final api = _api;
-        if (api != null) _send(api, token);
+        if (api != null) _sendIfNeeded(api, token);
       });
       final launch = await FirebaseMessaging.instance.getInitialMessage();
       if (launch != null) onOpen?.call(pushRoute(launch.data));
@@ -99,14 +99,34 @@ class PhonePush {
     try {
       await VisitReminders.instance.askPermissionOnce();
       final token = await FirebaseMessaging.instance.getToken();
-      if (token == null) return;
-      final prefs = await SharedPreferences.getInstance();
-      final at = DateTime.tryParse(prefs.getString(_registeredAt) ?? '');
-      final fresh = at != null && DateTime.now().difference(at) < _refresh;
-      if (prefs.getString(_token) == token && prefs.getString(_subscription) != null && fresh) return;
-      await _send(api, token);
+      if (token != null) await _sendIfNeeded(api, token);
     } catch (e) {
       debugPrint('Push not registered: $e');
+    }
+  }
+
+  Future<void>? _sending;
+  String? _sendingToken;
+
+  /// Sends [token] unless the server already has it from today. Unlock and a new token can ask
+  /// at the same moment: the second waits for the first instead of sending again.
+  Future<void> _sendIfNeeded(Api api, String token) async {
+    final pending = _sending;
+    if (pending != null && _sendingToken == token) return pending;
+    final prefs = await SharedPreferences.getInstance();
+    final at = DateTime.tryParse(prefs.getString(_registeredAt) ?? '');
+    final fresh = at != null && DateTime.now().difference(at) < _refresh;
+    if (prefs.getString(_token) == token && prefs.getString(_subscription) != null && fresh) return;
+    if (_sending != null && _sendingToken == token) return _sending;
+    _sendingToken = token;
+    final sending = _sending = _send(api, token);
+    try {
+      await sending;
+    } finally {
+      if (identical(_sending, sending)) {
+        _sending = null;
+        _sendingToken = null;
+      }
     }
   }
 

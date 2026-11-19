@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 
 ## [Unreleased]
 
+### 1.4.1 (2026-11-19)
+
+- Fixed: the phone registered for push twice at the same moment after sign-in (unlock and the
+  new Firebase token), and the server refused the second. It now sends once and waits for that.
+
 ### 1.4.0 (2026-11-19)
 
 - Added: push notifications from MediLink, even with the app closed: a booking confirmed, moved

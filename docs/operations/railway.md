@@ -20,6 +20,8 @@ beat inside it ([`scripts/railway_start.sh`](../../backend/scripts/railway_start
 push, reminders and the listing refresh still go out. Without a worker they wait in Redis and
 never send. Once `worker` and `beat` exist, set `EMBEDDED_WORKER=0` on `api`. Keep `api` at one
 replica while the worker is embedded (two would run two beats and send reminders twice).
+A **Custom Start Command** set in the service's Settings overrides `railway.json`: it must be
+`sh scripts/railway_start.sh` (or empty), not the plain `uvicorn` command, or no job runs.
 
 All three app services build the same `backend/Dockerfile` (hash-checked `requirements/prod.txt`,
 non-root). There is no top-level `requirements.txt` on purpose: Railway must use the Dockerfile,

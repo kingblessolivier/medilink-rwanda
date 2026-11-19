@@ -8,7 +8,7 @@ import datetime as dt
 from collections import Counter
 from typing import Any, cast
 
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.models import Count, Prefetch
 from django.utils import timezone
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -64,6 +64,8 @@ from medilink.patients.errors import FieldRule, PatientsAPIView
 
 TAGS = ["notifications"]
 MAX_ACTIVE_SUBSCRIPTIONS = 10
+# pg_advisory_xact_lock(class, key) class for saving a push subscription (key: the endpoint)
+PUSH_LOCK = 7311
 
 
 def _user(request: Request) -> User:
@@ -514,6 +516,10 @@ def _save_subscription(
     now = timezone.now()
     created = True
     with transaction.atomic():
+        # The same endpoint sent twice at once (the app registers on unlock and on a new token)
+        # takes turns: the second finds the first's row instead of breaking the unique endpoint.
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT pg_advisory_xact_lock(%s, hashtext(%s))", [PUSH_LOCK, endpoint])
         sub = PushSubscription.objects.select_for_update().filter(endpoint=endpoint).first()
         if sub is not None and sub.user_id == user.pk and sub.revoked_at is None:
             created = False

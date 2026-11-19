@@ -3,7 +3,7 @@ description: "MediLink Rwanda patient app (docs/upgrade/15-mobile-app.md)"
 publish_to: 'none'
 
 # versionName+versionCode of the APK; raise both for every APK you share.
-version: 1.4.0+20
+version: 1.4.1+21
 
 environment:
   sdk: ^3.12.2
