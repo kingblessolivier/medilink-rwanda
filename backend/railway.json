@@ -8,7 +8,7 @@
     "preDeployCommand": [
       "/bin/sh -c \"python scripts/railway_bootstrap_db.py && MEDILINK_DB_ROLE=owner python manage.py migrate --noinput && (python manage.py refresh_listing || echo 'refresh_listing failed; the 10-minute refresh will catch up')\""
     ],
-    "startCommand": "/bin/sh -c \"exec uvicorn config.asgi:application --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --no-server-header --workers 2\"",
+    "startCommand": "/bin/sh scripts/railway_start.sh",
     "healthcheckPath": "/api/v1/health/",
     "healthcheckTimeout": 60,
     "restartPolicyType": "ON_FAILURE",

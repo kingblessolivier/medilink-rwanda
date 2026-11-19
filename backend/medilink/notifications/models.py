@@ -217,12 +217,21 @@ class RevokedReason(models.TextChoices):
     LIMIT = "limit", "Over the limit"
 
 
+class PushKind(models.TextChoices):
+    WEB = "web", "Browser (Web Push)"
+    APP = "app", "Phone app (Firebase Cloud Messaging)"
+
+
 class PushSubscription(TimeStampedModel):
+    """A browser (web push endpoint and keys) or the phone app (its FCM registration token in
+    `endpoint`, no keys)."""
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="+")
+    kind = models.CharField(max_length=3, choices=PushKind.choices, default=PushKind.WEB)
     endpoint = models.TextField(unique=True)
     endpoint_host = models.CharField(max_length=255)
-    p256dh = models.CharField(max_length=100)
-    auth_secret = models.CharField(max_length=40)
+    p256dh = models.CharField(max_length=100, blank=True)
+    auth_secret = models.CharField(max_length=40, blank=True)
     label = models.CharField(max_length=60, blank=True)
     session_key_hash = models.BinaryField(null=True, blank=True)
     last_success_at = models.DateTimeField(null=True, blank=True)

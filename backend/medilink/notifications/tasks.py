@@ -11,6 +11,7 @@ from typing import Any
 from celery import shared_task
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from medilink.notifications import channels, content_policy, registry, templates
@@ -36,6 +37,9 @@ BACKOFF = {
 }
 STALE_QUEUED = dt.timedelta(minutes=2)
 UNREAD_FALLBACK_AFTER = dt.timedelta(minutes=15)
+# Older than this, a message is news no longer: cancelled, not sent (a worker that was down for
+# days must not send a backlog of stale alerts when it starts).
+MAX_QUEUE_AGE = dt.timedelta(hours=24)
 BATCH = 500
 
 
@@ -117,7 +121,9 @@ def send_attempt(attempt_id: str) -> None:
         if notification.is_withdrawn:
             _finish(attempt, AttemptStatus.CANCELLED, FailureReason.WITHDRAWN, now)
             return
-        if notification.expires_at and notification.expires_at <= now:
+        if (notification.expires_at and notification.expires_at <= now) or (
+            attempt.queued_at and attempt.queued_at <= now - MAX_QUEUE_AGE
+        ):
             _finish(attempt, AttemptStatus.CANCELLED, FailureReason.EXPIRED, now)
             return
         adapter = channels.get(attempt.channel)
@@ -150,6 +156,7 @@ def send_attempt(attempt_id: str) -> None:
             url=inbox_url(notification.audience, notification.pk),
             ttl_seconds=ttl,
             topic=topic(notification.dedupe_key),
+            action_path=notification.action_path or "",
         )
         address = (
             notification.recipient_user.email
@@ -211,8 +218,8 @@ def dispatch_due() -> int:
     now = timezone.now()
     with transaction.atomic():
         expired = DeliveryAttempt.objects.filter(
+            Q(notification__expires_at__lte=now) | Q(queued_at__lte=now - MAX_QUEUE_AGE),
             status__in=[AttemptStatus.HELD, AttemptStatus.QUEUED],
-            notification__expires_at__lte=now,
         )
         expired.update(
             status=AttemptStatus.CANCELLED,
@@ -251,6 +258,7 @@ def unread_fallback() -> int:
             is_withdrawn=False,
             fallback_done_at__isnull=True,
             created_at__lte=now - UNREAD_FALLBACK_AFTER,
+            created_at__gt=now - MAX_QUEUE_AGE,
         ).values_list("pk", flat=True)[:BATCH]
     )
     for pk in ids:

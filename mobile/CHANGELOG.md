@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 
 ## [Unreleased]
 
+### 1.4.0 (2026-11-19)
+
+- Added: push notifications from MediLink, even with the app closed: a booking confirmed, moved
+  or cancelled by the facility, "almost your turn" and "your turn" in the queue, results and
+  announcements. Tapping one opens its page (the booking, the queue ticket, the result), or the
+  notifications list. They ring in the "MediLink alerts" channel. The phone registers after
+  sign-in and is removed on sign-out. The visit reminders stay on the phone, so they never come
+  twice.
+
 ### 1.3.0 (2026-11-19)
 
 - Added: visit reminders on the phone. For each confirmed visit the app schedules notifications 24

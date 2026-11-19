@@ -15,6 +15,12 @@ secret values in this file or in git; they go in Railway's variables only.
 | `worker` | `/backend` | `/backend/railway.worker.json` | No public domain |
 | `beat` | `/backend` | `/backend/railway.beat.json` | No public domain; exactly one replica |
 
+**One service only (trial).** Until `worker` and `beat` exist, `api` runs the Celery worker with
+beat inside it ([`scripts/railway_start.sh`](../../backend/scripts/railway_start.sh)), so emails,
+push, reminders and the listing refresh still go out. Without a worker they wait in Redis and
+never send. Once `worker` and `beat` exist, set `EMBEDDED_WORKER=0` on `api`. Keep `api` at one
+replica while the worker is embedded (two would run two beats and send reminders twice).
+
 All three app services build the same `backend/Dockerfile` (hash-checked `requirements/prod.txt`,
 non-root). There is no top-level `requirements.txt` on purpose: Railway must use the Dockerfile,
 not Railpack.
@@ -62,6 +68,7 @@ Shared by `api`, `worker` and `beat` (use Railway shared variables). Generate ev
 | `MEDILINK_FIELD_KEYS`, `MEDILINK_FIELD_ACTIVE_KEY_ID` | `1:<key>` and `1` |
 | `MEDILINK_BLIND_INDEX_KEYS`, `MEDILINK_BLIND_INDEX_ACTIVE_KEY_ID` | `1:<another key>` and `1` (must differ from every field key) |
 | `MFA_SECRET_KEYS`, `MFA_SECRET_ACTIVE_KEY_ID` | `1:<another key>` and `1` |
+| `FIREBASE_SERVICE_ACCOUNT` | Firebase service account key (the whole JSON file) that sends push to the phone app. Firebase console > Project settings > Service accounts |
 | `BREVO_API_KEY`, `DEFAULT_FROM_EMAIL` | Brevo API key and a sender verified in Brevo. Railway blocks outgoing SMTP below the Pro plan, so `EMAIL_URL` (SMTP) cannot reach Gmail from here |
 | `NUM_PROXIES` | `1` (Railway's edge proxy; client IPs for throttling) |
 | `UPLOADS_SCANNER`, `UPLOADS_STORAGE` | `clamd` and `s3` for real documents (see `.env.example` [S1]) |

@@ -143,6 +143,48 @@ paths:
               schema:
                 $ref: '#/components/schemas/Health'
           description: ''
+  /api/v1/patient/app-devices/:
+    post:
+      operationId: patient_app_devices_create
+      description: |-
+        The phone app registers its Firebase Cloud Messaging token here after sign-in; it removes
+        it with DELETE push-subscriptions/{id}/ at sign-out.
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppDeviceRequestRequest'
+        required: true
+      security:
+      - staffSession: []
+      - patientSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PushSubscription'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PushSubscription'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Invalid token
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Phone push not configured
   /api/v1/patient/auth/google/:
     get:
       operationId: patient_auth_google_config
@@ -19140,6 +19182,19 @@ components:
       - audience
       - body_i18n
       - title_i18n
+    AppDeviceRequestRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          minLength: 20
+          maxLength: 4096
+          pattern: ^[A-Za-z0-9_:\-]+$
+        name:
+          type: string
+          maxLength: 60
+      required:
+      - token
     ApplicantApplication:
       type: object
       properties:
@@ -34802,6 +34857,8 @@ components:
           type: string
           format: uuid
           readOnly: true
+        kind:
+          $ref: '#/components/schemas/PushSubscriptionKindEnum'
         label:
           type: string
           maxLength: 60
@@ -34820,6 +34877,14 @@ components:
       - created_at
       - endpoint_host
       - id
+    PushSubscriptionKindEnum:
+      enum:
+      - web
+      - app
+      type: string
+      description: |-
+        * `web` - Browser (Web Push)
+        * `app` - Phone app (Firebase Cloud Messaging)
     PushSubscriptionRequestRequest:
       type: object
       properties:

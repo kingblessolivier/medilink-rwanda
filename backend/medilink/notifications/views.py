@@ -53,6 +53,7 @@ from medilink.notifications.models import (
     DeliveryAttempt,
     Notification,
     Preference,
+    PushKind,
     PushSubscription,
     RevokedReason,
     Template,
@@ -496,6 +497,78 @@ class WebPushKeyView(PatientsAPIView):
         )
 
 
+def _save_subscription(
+    request: Request,
+    *,
+    endpoint: str,
+    kind: str,
+    host: str,
+    label: str,
+    p256dh: str = "",
+    auth: str = "",
+) -> Response:
+    """Create or take over the push subscription for `endpoint` (a web push URL or the app's
+    FCM token), keeping the newest MAX_ACTIVE_SUBSCRIPTIONS per account."""
+    user = _user(request)
+    session_key = getattr(request.session, "session_key", None)
+    now = timezone.now()
+    created = True
+    with transaction.atomic():
+        sub = PushSubscription.objects.select_for_update().filter(endpoint=endpoint).first()
+        if sub is not None and sub.user_id == user.pk and sub.revoked_at is None:
+            created = False
+        elif sub is not None and sub.user_id != user.pk and sub.revoked_at is None:
+            record(
+                "notifications.push.unsubscribed",
+                request=request,
+                object_type="notifications.push_subscription",
+                object_id=sub.pk,
+                metadata={
+                    "subscription_id": str(sub.pk),
+                    "endpoint_host": sub.endpoint_host,
+                    "reason": RevokedReason.REPLACED,
+                },
+            )
+        if sub is None:
+            sub = PushSubscription(endpoint=endpoint)
+        sub.user = user
+        sub.kind = kind
+        sub.endpoint_host = host
+        sub.p256dh = p256dh
+        sub.auth_secret = auth
+        sub.label = label
+        sub.session_key_hash = observers.session_hash(session_key) if session_key else None
+        sub.revoked_at = None
+        sub.revoked_reason = None
+        sub.failure_count = 0
+        sub.save()
+        active = list(
+            PushSubscription.objects.filter(user=user, revoked_at__isnull=True)
+            .exclude(pk=sub.pk)
+            .order_by("created_at")
+        )
+        for old in active[: max(0, len(active) - (MAX_ACTIVE_SUBSCRIPTIONS - 1))]:
+            old.revoked_at = now
+            old.revoked_reason = RevokedReason.LIMIT
+            old.save(update_fields=["revoked_at", "revoked_reason", "updated_at"])
+        if created:
+            record(
+                "notifications.push.subscribed",
+                request=request,
+                object_type="notifications.push_subscription",
+                object_id=sub.pk,
+                metadata={
+                    "subscription_id": str(sub.pk),
+                    "endpoint_host": host,
+                    "reason": "user",
+                },
+            )
+    return Response(
+        s.PushSubscriptionSerializer(sub).data,
+        status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+    )
+
+
 class PushSubscriptionsView(_Inbox):
     permission_classes = [IsPatientAuthenticated]
 
@@ -534,67 +607,48 @@ class PushSubscriptionsView(_Inbox):
             raise _bad("keys.p256dh", "Invalid key.")
         if _b64url_len(data["keys"]["auth"]) != 16:
             raise _bad("keys.auth", "Invalid key.")
-        user = _user(request)
-        session_key = getattr(request.session, "session_key", None)
-        label = observers.device_label(user_agent(request))
-        now = timezone.now()
-        created = True
-        with transaction.atomic():
-            sub = (
-                PushSubscription.objects.select_for_update()
-                .filter(endpoint=data["endpoint"])
-                .first()
-            )
-            if sub is not None and sub.user_id == user.pk and sub.revoked_at is None:
-                created = False
-            elif sub is not None and sub.user_id != user.pk and sub.revoked_at is None:
-                record(
-                    "notifications.push.unsubscribed",
-                    request=request,
-                    object_type="notifications.push_subscription",
-                    object_id=sub.pk,
-                    metadata={
-                        "subscription_id": str(sub.pk),
-                        "endpoint_host": sub.endpoint_host,
-                        "reason": RevokedReason.REPLACED,
-                    },
-                )
-            if sub is None:
-                sub = PushSubscription(endpoint=data["endpoint"])
-            sub.user = user
-            sub.endpoint_host = host
-            sub.p256dh = data["keys"]["p256dh"]
-            sub.auth_secret = data["keys"]["auth"]
-            sub.label = label
-            sub.session_key_hash = observers.session_hash(session_key) if session_key else None
-            sub.revoked_at = None
-            sub.revoked_reason = None
-            sub.failure_count = 0
-            sub.save()
-            active = list(
-                PushSubscription.objects.filter(user=user, revoked_at__isnull=True)
-                .exclude(pk=sub.pk)
-                .order_by("created_at")
-            )
-            for old in active[: max(0, len(active) - (MAX_ACTIVE_SUBSCRIPTIONS - 1))]:
-                old.revoked_at = now
-                old.revoked_reason = RevokedReason.LIMIT
-                old.save(update_fields=["revoked_at", "revoked_reason", "updated_at"])
-            if created:
-                record(
-                    "notifications.push.subscribed",
-                    request=request,
-                    object_type="notifications.push_subscription",
-                    object_id=sub.pk,
-                    metadata={
-                        "subscription_id": str(sub.pk),
-                        "endpoint_host": host,
-                        "reason": "user",
-                    },
-                )
-        return Response(
-            s.PushSubscriptionSerializer(sub).data,
-            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        return _save_subscription(
+            request,
+            endpoint=data["endpoint"],
+            kind=PushKind.WEB,
+            host=host,
+            label=observers.device_label(user_agent(request)),
+            p256dh=data["keys"]["p256dh"],
+            auth=data["keys"]["auth"],
+        )
+
+
+class AppDevicesView(_Inbox):
+    """The phone app registers its Firebase Cloud Messaging token here after sign-in; it removes
+    it with DELETE push-subscriptions/{id}/ at sign-out."""
+
+    permission_classes = [IsPatientAuthenticated]
+
+    def get_throttles(self) -> list[Any]:
+        return [*super().get_throttles(), PushSubscribeThrottle()]
+
+    @extend_schema(
+        tags=TAGS,
+        request=s.AppDeviceRequestSerializer,
+        responses={
+            200: s.PushSubscriptionSerializer,
+            201: s.PushSubscriptionSerializer,
+            400: err("Invalid token"),
+            422: err("Phone push not configured"),
+        },
+    )
+    def post(self, request: Request) -> Response:
+        if not conf.fcm_enabled():
+            raise BusinessRuleViolation("Phone notifications are not available.")
+        body = s.AppDeviceRequestSerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        data = body.validated_data
+        return _save_subscription(
+            request,
+            endpoint=data["token"],
+            kind=PushKind.APP,
+            host="fcm.googleapis.com",
+            label=data.get("name") or "MediLink app",
         )
 
 

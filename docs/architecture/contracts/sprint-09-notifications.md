@@ -298,6 +298,7 @@ All follow [API conventions](../02-api-conventions.md): error envelope, paginati
 | `GET push-subscriptions/` | → active `PushSubscription` list (own) | 401 | |
 | `POST push-subscriptions/` | `PushSubscriptionRequest` → `201` (`200` if already yours). An endpoint held by another account moves to you (old row `replaced`, shared phones); an 11th active subscription revokes the oldest (`limit`). | 400 (host not allowlisted, not https, invalid keys), 429 | RL: 20 per hour per account; Audit; FR-NOT-03 |
 | `DELETE push-subscriptions/{id}/` | → `204` | 404 | Audit |
+| `POST app-devices/` | `{token, name?}` (the phone app's FCM token) → `201` / `200`, a `PushSubscription` with `kind: "app"`, same take-over and limit rules. Web push events then also go to the phone through FCM, except the visit reminders the app schedules itself (`scheduling.booking.reminder`, `.soon`, `.now`) | 400 (invalid token), 422 (`FIREBASE_SERVICE_ACCOUNT` unset), 429 | RL: 20 per hour per account; Audit; FR-NOT-03 (2026-11-19) |
 
 **Staff** (`IsStaffAuthenticated`, MFA complete; paths under `/api/v1/staff/`)
 

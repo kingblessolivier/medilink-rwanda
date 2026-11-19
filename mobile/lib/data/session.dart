@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../app/config.dart';
 import 'api.dart';
 import 'models.dart';
+import 'push.dart';
 import 'secure_store.dart';
 
 enum AuthPhase { starting, signedOut, setPin, locked, ready }
@@ -249,6 +250,7 @@ class AuthController extends Notifier<AuthPhase> {
   }
 
   Future<void> signOut() async {
+    await PhonePush.instance.unregister(_api); // while the session still works
     try {
       await _api.post('/api/v1/patient/auth/logout/');
     } on ApiException {
@@ -264,6 +266,7 @@ class AuthController extends Notifier<AuthPhase> {
 
   /// The server ended the session (expired, revoked, signed out elsewhere).
   Future<void> sessionEnded() async {
+    await PhonePush.instance.unregister(null);
     await _store.wipe();
     state = AuthPhase.signedOut;
   }

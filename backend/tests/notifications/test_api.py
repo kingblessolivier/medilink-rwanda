@@ -460,6 +460,7 @@ def test_every_endpoint_is_routed() -> None:
         "patient-notifications-read-all",
         "patient-notification-preferences",
         "patient-push-subscriptions",
+        "patient-app-devices",
         "staff-notifications",
         "staff-notifications-unread-count",
         "staff-notifications-read-all",

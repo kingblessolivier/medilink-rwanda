@@ -36,6 +36,7 @@ urlpatterns = [
         views.PushSubscriptionsView.as_view(),
         name="patient-push-subscriptions",
     ),
+    path("app-devices/", views.AppDevicesView.as_view(), name="patient-app-devices"),
     path(
         "push-subscriptions/<uuid:subscription_id>/",
         views.PushSubscriptionDetailView.as_view(),

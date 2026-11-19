@@ -13,6 +13,7 @@ const _more = <String, Map<String, String>>{
   'en': {
     // v1.3.0: visit reminders on the phone
     "remind.channel": 'Visit reminders',
+    "push.channel": 'MediLink alerts',
     "remind.dayBefore": 'Visit tomorrow',
     "remind.twoHours": 'Visit in 2 hours',
     "remind.soon": 'Your visit is in 15 minutes',
@@ -352,6 +353,7 @@ const _more = <String, Map<String, String>>{
   'rw': {
     // v1.3.0: visit reminders on the phone
     "remind.channel": 'Kwibutsa gahunda',
+    "push.channel": 'Amakuru ya MediLink',
     "remind.dayBefore": 'Gahunda ni ejo',
     "remind.twoHours": 'Hasigaye amasaha 2',
     "remind.soon": 'Hasigaye iminota 15',
@@ -692,6 +694,7 @@ const _more = <String, Map<String, String>>{
   'fr': {
     // v1.3.0: visit reminders on the phone
     "remind.channel": 'Rappels de visite',
+    "push.channel": 'Alertes MediLink',
     "remind.dayBefore": 'Visite demain',
     "remind.twoHours": 'Visite dans 2 heures',
     "remind.soon": 'Votre visite dans 15 minutes',

@@ -674,7 +674,8 @@ Requirements: FR-NOT-01..12. Facility notification settings (reminder timings, "
 | `POST` | `/api/v1/patient/notifications/read-all/` | Mark all read | Patient session | FR-NOT-02 | | Planned |
 | `GET`, `PATCH` | `/api/v1/patient/notification-preferences/` | Channels per level, quiet hours, reminder timing, dependents' alerts, language | Patient session | FR-NOT-05, FR-NOT-06, FR-NOT-08 | Critical alerts can't be fully disabled while a ticket is active | Planned |
 | `POST` | `/api/v1/patient/push-subscriptions/` | Register a browser for web push | Patient session | FR-NOT-03 | Endpoint host must be on the push-service allowlist | Planned |
-| `DELETE` | `/api/v1/patient/push-subscriptions/{id}/` | Remove a browser | Patient session | FR-NOT-03 | | Planned |
+| `DELETE` | `/api/v1/patient/push-subscriptions/{id}/` | Remove a browser or the phone app | Patient session | FR-NOT-03 | | Planned |
+| `POST` | `/api/v1/patient/app-devices/` | Register the phone app's Firebase Cloud Messaging token (`{token, name?}`); answers like `POST push-subscriptions/` with `kind: "app"` | Patient session | FR-NOT-03 | `422` while `FIREBASE_SERVICE_ACCOUNT` is unset; an account takes over a token another account held; 20 per hour | Implemented (2026-11-19) |
 
 ### Staff
 

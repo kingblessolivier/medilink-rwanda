@@ -12,6 +12,7 @@ import 'app/theme.dart';
 import 'data/appearance.dart';
 import 'data/models.dart';
 import 'data/providers.dart';
+import 'data/push.dart';
 import 'data/reminders.dart';
 import 'data/session.dart';
 
@@ -42,12 +43,19 @@ class _MediLinkAppState extends ConsumerState<MediLinkApp> with WidgetsBindingOb
     Palette.dark = _wantsDark(ref.read(appearanceProvider));
     // Me → Settings → Appearance: like the phone, light or dark.
     ref.listenManual(appearanceProvider, (_, next) => _applyDark(_wantsDark(next)));
-    // Visit reminders on the phone follow the upcoming visits while signed in.
-    VisitReminders.instance.onOpen = (id) => _go('/visits/booking/$id');
-    VisitReminders.instance.init().then((_) {
+    // Visit reminders on the phone follow the upcoming visits while signed in; push from the
+    // server comes while signed in. Tapping either opens its page.
+    VisitReminders.instance.onOpen = _go;
+    PhonePush.instance
+      ..onOpen = _go
+      ..strings = () => Strings.forCode(ref.read(languageProvider));
+    VisitReminders.instance.init().then((_) => PhonePush.instance.init()).then((_) {
       if (!mounted) return;
       ref.listenManual(authProvider, (_, phase) => _followVisits(phase), fireImmediately: true);
-      ref.listenManual(languageProvider, (_, _) => _syncReminders());
+      ref.listenManual(languageProvider, (_, code) {
+        _syncReminders();
+        VisitReminders.instance.ensureAlertsChannel(Strings.forCode(code));
+      });
     });
   }
 
@@ -61,6 +69,7 @@ class _MediLinkAppState extends ConsumerState<MediLinkApp> with WidgetsBindingOb
       _lastVisits = null;
       VisitReminders.instance.clear();
     } else if (phase == AuthPhase.ready && _visits == null) {
+      PhonePush.instance.register(ref.read(apiProvider));
       _visits = ref.listenManual(bookingsProvider('upcoming'), (_, next) {
         final visits = next.value?.data;
         if (visits == null) return;

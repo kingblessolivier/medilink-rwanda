@@ -25,6 +25,26 @@ The APK is written to `build/app/outputs/flutter-apk/app-release.apk`. Copy it t
 (ignored by git) as `medilink-<version>.apk` to share it. Raise `version:` in `pubspec.yaml`
 (`1.0.1+2`: name + build number) for every APK you share, or phones refuse the update.
 
+## Push notifications
+
+Push from the server (booking confirmed or moved, your turn, results, announcements) comes
+through Firebase Cloud Messaging, project `medilink-rwanda-58d06`, Android app `rw.medilink`.
+Give the project's values at build time from a file kept out of git (made from the console's
+`google-services.json`):
+
+```sh
+flutter build apk --release --split-per-abi \
+  --dart-define-from-file=C:/Users/<you>/.medilink/firebase.json
+```
+
+```json
+{"FIREBASE_API_KEY": "…", "FIREBASE_APP_ID": "1:…:android:…",
+ "FIREBASE_SENDER_ID": "…", "FIREBASE_PROJECT_ID": "medilink-rwanda-58d06"}
+```
+
+A build without them has no push; the visit reminders the phone schedules itself still work. The
+server needs `FIREBASE_SERVICE_ACCOUNT` (docs/operations/railway.md).
+
 ## Signing
 
 Release builds are signed with the key named in `android/key.properties` (ignored by git):

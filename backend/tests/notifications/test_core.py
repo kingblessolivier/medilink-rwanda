@@ -212,7 +212,7 @@ def _fake_push(results: list[SendResult]) -> Any:
     adapter = channels.get("web_push")
     calls = iter(results)
     return (
-        mock.patch.object(adapter, "is_enabled", return_value=True),
+        mock.patch("medilink.notifications.conf.push_enabled", return_value=True),
         mock.patch.object(adapter, "send", side_effect=lambda *a, **k: next(calls)),
     )
 
@@ -295,6 +295,30 @@ def test_unread_important_for_today_falls_back_once(event: Any) -> None:
     assert DeliveryAttempt.objects.filter(
         notification=n, is_fallback=True, channel="email"
     ).exists()
+
+
+def test_a_day_old_backlog_is_cancelled_not_sent(event: Any) -> None:
+    """A worker that was down must not send stale alerts when it starts."""
+    user = UserFactory()
+    with transaction.atomic():
+        result = notify(event.type, Recipients.users(user.pk, audience="patient"), _ctx())
+    email = DeliveryAttempt.objects.get(notification_id=result.created[0], channel="email")
+    old = timezone.now() - dt.timedelta(days=3)
+    DeliveryAttempt.objects.filter(pk=email.pk).update(
+        status=AttemptStatus.QUEUED, queued_at=old, scheduled_for=old
+    )
+    tasks.send_attempt(str(email.pk))
+    email.refresh_from_db()
+    assert email.status == AttemptStatus.CANCELLED and email.failure_reason == "expired"
+    DeliveryAttempt.objects.filter(pk=email.pk).update(status=AttemptStatus.QUEUED)
+    assert tasks.dispatch_due() == 0
+    email.refresh_from_db()
+    assert email.status == AttemptStatus.CANCELLED
+    assert mail.outbox == []
+    Notification.objects.filter(pk=result.created[0]).update(
+        priority="important", is_for_today=True, created_at=old
+    )
+    assert tasks.unread_fallback() == 0
 
 
 def test_every_registered_template_is_clean() -> None:

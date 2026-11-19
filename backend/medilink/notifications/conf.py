@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import datetime as dt
 import ipaddress
+import json
 import os
 from typing import Any
 from urllib.parse import urlsplit
@@ -42,6 +43,31 @@ def vapid_subject() -> str:
 
 def push_enabled() -> bool:
     return bool(vapid_public_key() and vapid_private_key())
+
+
+FCM_ACCOUNT_KEYS = ("project_id", "client_email", "private_key")
+
+
+def firebase_service_account() -> dict[str, str] | None:
+    """The Firebase service account (FIREBASE_SERVICE_ACCOUNT, the JSON key file's content) that
+    sends push to the phone app, or None when unset or unreadable. Never logged."""
+    raw = _setting("FIREBASE_SERVICE_ACCOUNT", "")
+    if isinstance(raw, dict):
+        account = raw
+    else:
+        try:
+            account = json.loads(str(raw or "").strip() or "null")
+        except ValueError:
+            return None
+    if not isinstance(account, dict) or not all(
+        isinstance(account.get(k), str) and account.get(k) for k in FCM_ACCOUNT_KEYS
+    ):
+        return None
+    return {k: str(v) for k, v in account.items() if isinstance(v, str)}
+
+
+def fcm_enabled() -> bool:
+    return firebase_service_account() is not None
 
 
 def allowed_hosts() -> tuple[str, ...]:

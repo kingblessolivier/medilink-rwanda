@@ -63,8 +63,13 @@ class VisitReminders {
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _ready = false;
 
-  /// Opens a booking when its reminder is tapped (set by the app once the router exists).
-  void Function(String bookingId)? onOpen;
+  /// Opens an app page when a reminder or a push is tapped (set by the app once the router
+  /// exists).
+  void Function(String route)? onOpen;
+
+  /// The channel push notifications use (channels/fcm.py on the server sends to this one).
+  static const alertsChannel = 'medilink_alerts';
+  static var _pushId = 1;
 
   Future<void> init() async {
     if (_ready || defaultTargetPlatform != TargetPlatform.android) return;
@@ -81,12 +86,62 @@ class VisitReminders {
     }
   }
 
-  void _open(String? bookingId) {
-    if (bookingId != null && bookingId.isNotEmpty) onOpen?.call(bookingId);
+  /// A reminder's payload is its booking id; a push's is the app route.
+  void _open(String? payload) {
+    if (payload == null || payload.isEmpty) return;
+    onOpen?.call(payload.startsWith('/') ? payload : '/visits/booking/$payload');
+  }
+
+  /// The channel Android shows push notifications in, made ahead so they ring and pop up even
+  /// while the app is closed.
+  Future<void> ensureAlertsChannel(Strings s) async {
+    if (!_ready) return;
+    try {
+      await _android?.createNotificationChannel(
+        AndroidNotificationChannel(alertsChannel, s.t('push.channel'), importance: Importance.high),
+      );
+    } catch (e) {
+      debugPrint('Push channel not created: $e');
+    }
+  }
+
+  /// Shows a push that came while the app is open (Android shows the others itself).
+  Future<void> showPush({required String title, required String body, String? route, required Strings s}) async {
+    if (!_ready) return;
+    try {
+      await _plugin.show(
+        id: _pushId++,
+        title: title,
+        body: body,
+        notificationDetails: NotificationDetails(
+          android: AndroidNotificationDetails(
+            alertsChannel,
+            s.t('push.channel'),
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+        ),
+        payload: route,
+      );
+    } catch (e) {
+      debugPrint('Push not shown: $e');
+    }
   }
 
   AndroidFlutterLocalNotificationsPlugin? get _android =>
       _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+
+  /// Whether the phone lets the app notify; asks once (Android 13+), the first time it matters
+  /// (a visit to remind of, or push turned on).
+  Future<bool> askPermissionOnce() async {
+    if (!_ready) return false;
+    final android = _android;
+    if (await android?.areNotificationsEnabled() ?? true) return true;
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_asked) ?? false) return false;
+    await prefs.setBool(_asked, true);
+    return await android?.requestNotificationsPermission() ?? false;
+  }
 
   /// Replaces every scheduled reminder with those for [bookings]. Asks for the notification
   /// permission once (Android 13+), the first time there is a visit to remind of.
@@ -97,14 +152,7 @@ class VisitReminders {
       await _plugin.cancelAllPendingNotifications();
       if (planned.isEmpty) return;
       final android = _android;
-      var allowed = await android?.areNotificationsEnabled() ?? true;
-      if (!allowed) {
-        final prefs = await SharedPreferences.getInstance();
-        if (prefs.getBool(_asked) ?? false) return;
-        await prefs.setBool(_asked, true);
-        allowed = await android?.requestNotificationsPermission() ?? false;
-        if (!allowed) return;
-      }
+      if (!await askPermissionOnce()) return;
       // On time when the phone allows exact alarms; otherwise Android may send it a little late.
       final exact = await android?.canScheduleExactNotifications() ?? false;
       final details = NotificationDetails(

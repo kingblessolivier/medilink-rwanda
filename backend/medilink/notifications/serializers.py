@@ -147,7 +147,12 @@ class PushSubscriptionRequestSerializer(serializers.Serializer[Any]):
 class PushSubscriptionSerializer(serializers.ModelSerializer[PushSubscription]):
     class Meta:
         model = PushSubscription
-        fields = ["id", "label", "endpoint_host", "created_at", "last_success_at"]
+        fields = ["id", "kind", "label", "endpoint_host", "created_at", "last_success_at"]
+
+
+class AppDeviceRequestSerializer(serializers.Serializer[Any]):
+    token = serializers.RegexField(r"^[A-Za-z0-9_:\-]+$", min_length=20, max_length=4096)
+    name = serializers.CharField(max_length=60, required=False, allow_blank=True)
 
 
 class WebPushKeySerializer(serializers.Serializer[Any]):

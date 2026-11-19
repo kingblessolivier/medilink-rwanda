@@ -25,6 +25,7 @@ class Message:
     url: str
     ttl_seconds: int
     topic: str
+    action_path: str = ""
 
 
 @dataclass(frozen=True)

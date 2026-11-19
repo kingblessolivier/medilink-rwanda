@@ -1,6 +1,9 @@
 """Web push (contract sprint-09 §3.2): payload encrypted (aes128gcm, RFC 8291) and VAPID-signed
 (RFC 8292) by pywebpush; endpoint host re-checked against the allowlist before every send;
-redirects not followed; 404/410 revokes the subscription. Keys and endpoints are never logged."""
+redirects not followed; 404/410 revokes the subscription. Keys and endpoints are never logged.
+
+The same channel reaches the phone app: an `app` subscription holds the app's FCM token and is
+sent through Firebase Cloud Messaging (channels/fcm.py), with the same texts and preferences."""
 
 from __future__ import annotations
 
@@ -19,6 +22,11 @@ logger = logging.getLogger(__name__)
 
 MAX_PAYLOAD = 3 * 1024
 URGENCY = {"critical": "high", "important": "normal", "routine": "low"}
+# The app schedules these on the phone itself (mobile/lib/data/reminders.dart), offline too; a
+# push for them would ring twice.
+PHONE_SCHEDULED = frozenset(
+    {"scheduling.booking.reminder", "scheduling.booking.soon", "scheduling.booking.now"}
+)
 
 
 def payload(message: Message) -> bytes:
@@ -58,28 +66,36 @@ class WebPushAdapter:
     limits: ClassVar[TextLimits] = LIMITS["web_push"]
 
     def is_enabled(self) -> bool:
-        return conf.push_enabled()
+        return conf.push_enabled() or conf.fcm_enabled()
 
     def targets(self, notification: Any) -> list[Target]:
-        from medilink.notifications.models import PushSubscription
+        from medilink.notifications.models import PushKind, PushSubscription
 
-        if not self.is_enabled():
+        kinds = []
+        if conf.push_enabled():
+            kinds.append(PushKind.WEB)
+        if conf.fcm_enabled() and notification.event_type not in PHONE_SCHEDULED:
+            kinds.append(PushKind.APP)
+        if not kinds:
             return []
         return [
             Target(address=sub.endpoint, subscription_id=sub.pk)
             for sub in PushSubscription.objects.filter(
-                user_id=notification.recipient_user_id, revoked_at__isnull=True
+                user_id=notification.recipient_user_id, revoked_at__isnull=True, kind__in=kinds
             ).order_by("created_at")
         ]
 
     def send(self, message: Message, target: Target) -> SendResult:
         from pywebpush import WebPushException, webpush
 
-        from medilink.notifications.models import PushSubscription
+        from medilink.notifications.channels import fcm
+        from medilink.notifications.models import PushKind, PushSubscription
 
         sub = PushSubscription.objects.filter(pk=target.subscription_id).first()
         if sub is None or sub.revoked_at is not None:
             return SendResult(status="failed", failure_reason="no_target")
+        if sub.kind == PushKind.APP:
+            return fcm.send(message, sub.endpoint)
         if conf.endpoint_host(sub.endpoint) is None:  # host changed in the database
             return SendResult(status="failed", failure_reason="no_target", revoke_target=True)
         try:
