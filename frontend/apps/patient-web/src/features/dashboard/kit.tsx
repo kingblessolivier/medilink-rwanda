@@ -299,19 +299,18 @@ export function StatCard({
     <Link
       to={to}
       className={cx(
-        panelClass,
-        "group relative flex h-full flex-col gap-4 p-4 text-fg no-underline sm:p-5",
-        "transition-[border-color,box-shadow] duration-200 ease-out-quint hover:border-brand/40 hover:shadow-card",
+        "group relative flex h-full flex-col gap-3 p-4 text-fg no-underline sm:p-5",
+        "transition-colors duration-200 ease-out-quint hover:bg-subtle motion-reduce:transition-none",
       )}
     >
-      <span className="flex items-center gap-2.5 pr-5">
+      <span className="flex items-start gap-2.5 pr-5">
         <span
           aria-hidden="true"
           className={cx("grid size-8 shrink-0 place-items-center rounded-lg", STAT_TONE[tone])}
         >
           <IconComponent weight="duotone" className="size-[1.125rem]" />
         </span>
-        <span className="min-w-0 truncate text-body-sm font-semibold text-fg-secondary">
+        <span className="min-w-0 pt-1 text-body-sm leading-snug font-semibold text-fg-secondary">
           {label}
         </span>
       </span>
@@ -431,6 +430,14 @@ export function RowIcon({
 }
 
 /** Date tile: month, the day emphasised, then the year or weekday. */
+function sameYear(iso: string): boolean {
+  const year = (value: Date | string) =>
+    new Intl.DateTimeFormat("en", { year: "numeric", timeZone: "Africa/Kigali" }).format(
+      new Date(value),
+    );
+  return year(iso) === year(new Date());
+}
+
 export function DateBlock({ iso, size = "md" }: { iso: string; size?: "md" | "lg" }) {
   const { i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? "rw";
@@ -455,7 +462,8 @@ export function DateBlock({ iso, size = "md" }: { iso: string; size?: "md" | "lg
         {part({ day: "numeric" })}
       </span>
       <span className="text-caption tabular-nums">
-        {size === "md" ? part({ year: "numeric" }) : part({ weekday: "short" })}
+        {/* the year only when it is not this year; otherwise the weekday, which a patient plans by */}
+        {size === "md" && !sameYear(iso) ? part({ year: "numeric" }) : part({ weekday: "short" })}
       </span>
     </span>
   );

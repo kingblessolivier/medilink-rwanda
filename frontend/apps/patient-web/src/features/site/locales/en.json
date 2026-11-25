@@ -96,8 +96,8 @@
     "notAvailable": "Not offered",
     "emergencyDept": "Hospital",
     "emergencyNote": "Hospitals receive emergencies. Call {{number}} if life is at risk.",
-    "joinQueue": "Join Queue",
-    "bookAppointment": "Book Appointment",
+    "joinQueue": "Join today's queue",
+    "bookAppointment": "Book appointment",
     "tabs": {
       "services": "Services",
       "doctors": "Doctors"

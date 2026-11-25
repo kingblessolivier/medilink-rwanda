@@ -554,6 +554,7 @@ export function LandingPage() {
             near={near}
             empty={<p className="m-0 px-5 py-8 text-fg-secondary">{t("site.home.nearEmpty")}</p>}
             switchable
+            rail
           />
         </section>
 

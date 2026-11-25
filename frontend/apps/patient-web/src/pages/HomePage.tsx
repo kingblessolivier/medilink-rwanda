@@ -580,7 +580,14 @@ function AtAGlance() {
   const value = (count: number | undefined, isError: boolean) => (isError ? null : count);
   return (
     <nav aria-label={t("dashboard.overview.glance.label")}>
-      <ul className="m-0 grid list-none grid-cols-2 gap-3 p-0 lg:grid-cols-4">
+      <ul
+        className={cx(
+          panelClass,
+          "m-0 grid list-none grid-cols-2 overflow-hidden p-0 lg:grid-cols-4",
+          "[&>li]:border-border [&>li:nth-child(odd)]:border-r [&>li:nth-child(-n+2)]:border-b",
+          "lg:[&>li]:border-r lg:[&>li:last-child]:border-r-0 lg:[&>li:nth-child(-n+2)]:border-b-0",
+        )}
+      >
         <li>
           <StatCard
             to={paths.appointments}

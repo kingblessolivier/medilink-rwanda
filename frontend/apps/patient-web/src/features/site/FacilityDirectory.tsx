@@ -266,12 +266,15 @@ export function FacilityEntries({
   className,
   headingLevel,
   compact = false,
+  rail = false,
 }: {
   label: string;
   rows: FacilityResult[];
   loading: boolean;
   headingLevel?: 2 | 3;
   compact?: boolean;
+  /** Phones: the cards side by side in a row that scrolls sideways (home), not a long column. */
+  rail?: boolean;
   selected?: string | null;
   onSelect?: (slug: string) => void;
   className?: string;
@@ -279,7 +282,15 @@ export function FacilityEntries({
   const { t } = useTranslation();
   // cards: one column on phones, two from 36 rem of list width, three from 64 rem
   const surface = cx("@container", className);
-  const grid = "m-0 grid list-none gap-5 p-0 @xl:grid-cols-2 @5xl:grid-cols-3";
+  const grid = rail
+    ? cx(
+        // phones: a row that scrolls sideways and stops on each card, the next one peeking in;
+        // the vertical padding leaves the cards' shadows uncut. From 36 rem: the usual grid
+        "m-0 flex list-none snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain p-0 py-2 [scrollbar-width:none]",
+        "[&>*]:w-[85%] [&>*]:max-w-80 [&>*]:shrink-0 [&>*]:snap-start",
+        "@xl:grid @xl:grid-cols-2 @xl:gap-5 @xl:overflow-visible @xl:py-0 @xl:[&>*]:w-auto @xl:[&>*]:max-w-none @5xl:grid-cols-3",
+      )
+    : "m-0 grid list-none gap-5 p-0 @xl:grid-cols-2 @5xl:grid-cols-3";
   if (loading)
     return (
       <div role="status" aria-label={t("site.loading")} className={surface}>
@@ -335,9 +346,12 @@ export function FacilityExplorer({
   switchable = false,
   headingLevel,
   compact = false,
+  rail = false,
 }: {
   /** Cards without the drawing (home). */
   compact?: boolean;
+  /** See FacilityEntries: a sideways row on phones (home). */
+  rail?: boolean;
   /** See FacilityEntry: 2 right under the page's <h1>. */
   headingLevel?: 2 | 3;
   label: string;
@@ -435,6 +449,7 @@ export function FacilityExplorer({
             loading={loading}
             headingLevel={headingLevel}
             compact={compact}
+            rail={rail}
             selected={selected}
             onSelect={setSelected}
           />

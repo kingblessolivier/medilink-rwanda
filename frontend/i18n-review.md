@@ -1,6 +1,6 @@
 # Kinyarwanda strings: native-speaker review
 
-Keys: 6309.
+Keys: 6314.
 
 Status: **every Kinyarwanda string below is a draft that needs native-speaker review.** None of
 them is final (docs/design/research/10-accessibility-and-localization.md §3, NFR-UX-01). Medical
@@ -615,6 +615,11 @@ File: `apps/patient-web/src/i18n/locales/rw.json`
 | `care.none` | Nta hantu hahuye n’ibi byatoranyijwe | No places match these filters | needs native-speaker review |
 | `care.tryInstead` | Hafi cyane: {{name}} | Nearest: {{name}} | needs native-speaker review |
 | `care.close` | Funga | Close | needs native-speaker review |
+| `care.myInsurance` | Ubwishingizi bwanjye: {{name}} | My insurance: {{name}} | needs native-speaker review |
+| `care.insurerOnly` | Ahakira {{name}} gusa. | Only places that take {{name}}. | needs native-speaker review |
+| `care.insurerAll` | Ahakira {{name}} haza mbere. | Places that take {{name}} come first. | needs native-speaker review |
+| `care.insurerAllLink` | Erekana n'ahandi | Show the others too | needs native-speaker review |
+| `care.insurerOnlyLink` | {{name}} gusa | Only {{name}} | needs native-speaker review |
 
 ## staff-web feature: billing (namespace billing)
 
@@ -6182,8 +6187,8 @@ File: `apps/patient-web/src/features/site/locales/rw.json`
 | `facility.notAvailable` | Ntibitangwa | Not offered | needs native-speaker review |
 | `facility.emergencyDept` | Ibitaro | Hospital | needs native-speaker review |
 | `facility.emergencyNote` | Ibitaro byakira ubutabazi bwihuse. Hamagara {{number}} niba ubuzima buri mu kaga. | Hospitals receive emergencies. Call {{number}} if life is at risk. | needs native-speaker review |
-| `facility.joinQueue` | Jya ku murongo | Join Queue | needs native-speaker review |
-| `facility.bookAppointment` | Fata gahunda | Book Appointment | needs native-speaker review |
+| `facility.joinQueue` | Jya ku murongo | Join today's queue | needs native-speaker review |
+| `facility.bookAppointment` | Fata gahunda | Book appointment | needs native-speaker review |
 | `facility.tabs.services` | Serivisi | Services | needs native-speaker review |
 | `facility.tabs.doctors` | Abaganga | Doctors | needs native-speaker review |
 | `facility.about` | Ibyerekeye | About | needs native-speaker review |

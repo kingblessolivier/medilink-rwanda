@@ -73,6 +73,7 @@ export default function FacilityMap({
   const map = useRef<L.Map | null>(null);
   const layer = useRef<L.LayerGroup | null>(null);
   const select = useRef(onSelect);
+  const fitted = useRef("");
   useEffect(() => {
     select.current = onSelect;
   });
@@ -85,6 +86,8 @@ export default function FacilityMap({
     instance.on("click", () => select.current?.(null));
     layer.current = L.layerGroup().addTo(instance);
     map.current = instance;
+    // a new map starts on all of Rwanda: let the pins effect fit it to the places again
+    fitted.current = "";
     return () => {
       instance.remove();
       map.current = null;
@@ -93,7 +96,6 @@ export default function FacilityMap({
   }, [tilesUrl, attribution]);
 
   // Pins: redrawn when the places or the selection change; the view fits the places once per set.
-  const fitted = useRef("");
   useEffect(() => {
     const group = layer.current;
     const instance = map.current;
@@ -136,7 +138,8 @@ export default function FacilityMap({
       if (you) bounds.extend([you.lat, you.lng]);
       instance.fitBounds(bounds, { padding: [32, 32], maxZoom: 14 });
     }
-  }, [points, selectedId, you]);
+    // tilesUrl and attribution: a recreated map needs its pins and its fit again
+  }, [points, selectedId, you, tilesUrl, attribution]);
 
   return (
     <div

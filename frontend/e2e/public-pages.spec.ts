@@ -33,7 +33,15 @@ test("hydration keeps the pre-rendered landing page as it is", async ({ page }) 
 
   const response = await page.request.get(PATIENT + "/");
   const html = await response.text();
-  const prerendered = /<h1\b[^>]*>([\s\S]*?)<\/h1>/.exec(html)?.[1]?.replace(/<[^>]+>/g, "");
+  // the heading's text: tags dropped and HTML entities decoded ("y&#x27;aho" reads "y'aho")
+  const prerendered = /<h1\b[^>]*>([\s\S]*?)<\/h1>/
+    .exec(html)?.[1]
+    ?.replace(/<[^>]+>/g, "")
+    .replace(/&#x27;|&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
 
   await page.goto(PATIENT + "/");
   const heading = page.getByRole("heading", { level: 1 });
@@ -94,8 +102,9 @@ test("the home page says when everything is closed, with no empty figures", asyn
   await page.goto(PATIENT + "/");
   await expect(page.getByText("All facilities are closed now")).toBeVisible();
   await expect(page.getByRole("link", { name: /next opening Mon/ })).toBeVisible();
-  await expect(page.getByText("People waiting")).toHaveCount(0);
-  await expect(page.getByText("Typical wait")).toHaveCount(0);
+  // exact: the home FAQ's answer mentions "the people waiting now"
+  await expect(page.getByText("People waiting", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Typical wait", { exact: true })).toHaveCount(0);
 });
 
 test.describe("phone width", () => {
